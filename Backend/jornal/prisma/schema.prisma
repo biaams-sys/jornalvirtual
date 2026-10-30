@@ -1,0 +1,210 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+
+
+enum TiposUsuarios {
+  USUARIO
+  VERIFICADO
+  ADMINISTRADOR
+}
+
+model Empresa {
+  id               Int      @id @default(autoincrement())
+
+  nome             String
+  cnpj             String   @unique
+
+  email            String?
+  telefone         String?
+  endereco         String?
+  cidade           String?
+  estado           String?
+  cep              String?
+
+  logo             String?
+
+  dataCriacao      DateTime @default(now())
+
+  tema             TemaEmpresa?
+
+  usuarios         Usuarios[]
+  noticias         Noticias[]
+  publicacoes      Publicacoes[]
+  hashtags         Hashtags[]
+}
+
+model TemaEmpresa {
+  id              Int      @id @default(autoincrement())
+
+  primary         String?
+  primaryDark     String?
+  secondary       String?
+  secondaryLight  String?
+  background      String?
+  surface         String?
+  text            String?
+  textLight       String?
+  border          String?
+  danger          String?
+
+  empresaId       Int      @unique
+  empresa         Empresa  @relation(fields: [empresaId], references: [id], onDelete: Cascade)
+}
+
+model Usuarios {
+  id             Int      @id @default(autoincrement())
+  nome           String
+  email          String   @unique
+  senha          String
+  fotoPerfil     String?
+  template       String?
+  bio            String?
+  tipo           TiposUsuarios
+
+  empresaId      Int
+  empresa         Empresa @relation(fields: [empresaId], references: [id], onDelete: Cascade)
+
+  dataCriacao    DateTime @default(now())
+
+  noticias               Noticias[]
+  publicacoes            Publicacoes[]
+  comentarios            Comentarios[]
+  curtidas               Curtidas[]
+  denunciasPublicacao    DenunciasPublicacao[]
+  denunciasComentario    DenunciasComentario[]
+  recuperacoesSenha      RecuperacaoSenha[]
+}
+
+model Noticias {
+  id                 Int      @id @default(autoincrement())
+
+  titulo             String
+  subtitulo          String?
+  texto              String
+
+  dataPublicacao     DateTime @default(now())
+  dataAtualizacao    DateTime @updatedAt
+
+  usuarioId          Int
+  empresaId          Int
+
+  autor              Usuarios @relation(fields: [usuarioId], references: [id])
+  empresa            Empresa @relation(fields: [empresaId], references: [id], onDelete: Cascade)
+
+  midias             MidiasNoticias[]
+}
+
+model MidiasNoticias {
+  id             Int      @id @default(autoincrement())
+
+  nomeOriginal   String
+  nomeArquivo    String
+  mimeType       String
+  path           String
+  dataUpload     DateTime @default(now())
+  noticiaId      Int
+  noticia         Noticias @relation(fields: [noticiaId], references: [id], onDelete: Cascade)
+}
+
+model Publicacoes {
+  id               Int      @id @default(autoincrement())
+  texto            String?
+  dataPublicacao   DateTime @default(now())
+  usuarioId        Int
+  empresaId        Int
+  autor            Usuarios @relation(fields: [usuarioId], references: [id])
+  empresa          Empresa @relation(fields: [empresaId], references: [id], onDelete: Cascade)
+  comentarios      Comentarios[]
+  curtidas         Curtidas[]
+  denuncias        DenunciasPublicacao[]
+  hashtags         Hashtags[]
+  midias           MidiasPublicacoes[]
+}
+
+model MidiasPublicacoes {
+  id             Int      @id @default(autoincrement())
+  nomeOriginal   String
+  nomeArquivo    String
+  mimeType       String
+  path           String
+  dataUpload     DateTime @default(now())
+  publicacaoId   Int
+  publicacao     Publicacoes @relation(fields: [publicacaoId], references: [id], onDelete: Cascade)
+}
+
+model Comentarios {
+  id                Int      @id @default(autoincrement())
+  texto             String
+  dataPublicacao    DateTime @default(now())
+  publicacaoId      Int
+  usuarioId         Int
+
+  publicacao        Publicacoes @relation(fields: [publicacaoId], references: [id], onDelete: Cascade)
+  autor             Usuarios @relation(fields: [usuarioId], references: [id])
+
+  comentarioPaiId   Int?
+  comentarioPai     Comentarios? @relation("RespostaComentario", fields: [comentarioPaiId], references: [id])
+  respostas         Comentarios[] @relation("RespostaComentario")
+  denuncias         DenunciasComentario[]
+}
+
+model Curtidas {
+  id             Int @id @default(autoincrement())
+  usuarioId      Int
+  publicacaoId   Int
+  usuario         Usuarios @relation(fields: [usuarioId], references: [id])
+  publicacao      Publicacoes @relation(fields: [publicacaoId], references: [id], onDelete: Cascade)
+  @@unique([usuarioId, publicacaoId])
+}
+
+model Hashtags {
+  id             Int      @id @default(autoincrement())
+  nome           String
+  empresaId      Int
+  dataCriacao    DateTime @default(now())
+  empresa         Empresa @relation(fields: [empresaId], references: [id], onDelete: Cascade)
+  publicacoes    Publicacoes[]
+
+  @@unique([nome, empresaId])
+}
+
+model DenunciasPublicacao {
+  id             Int      @id @default(autoincrement())
+  motivo         String
+  dataDenuncia   DateTime @default(now())
+  publicacaoId   Int
+  usuarioId      Int
+  publicacao      Publicacoes @relation(fields: [publicacaoId], references: [id], onDelete: Cascade)
+  usuario         Usuarios @relation(fields: [usuarioId], references: [id])
+}
+
+model DenunciasComentario {
+  id             Int      @id @default(autoincrement())
+  motivo         String
+  dataDenuncia   DateTime @default(now())
+  comentarioId   Int
+  usuarioId      Int
+  comentario      Comentarios @relation(fields: [comentarioId], references: [id], onDelete: Cascade)
+  usuario         Usuarios @relation(fields: [usuarioId], references: [id])
+}
+
+
+model RecuperacaoSenha {
+  id           Int      @id @default(autoincrement())
+  tokenHash    String   @unique
+  expiracao    DateTime
+  dataCriacao  DateTime @default(now())
+
+  usuarioId    Int
+  usuario      Usuarios @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+
+  @@index([usuarioId])
+}
