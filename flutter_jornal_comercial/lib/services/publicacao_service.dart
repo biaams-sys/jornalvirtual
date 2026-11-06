@@ -8,11 +8,8 @@ import 'api_service.dart';
 class PublicacaoService {
   final ApiService _apiService = ApiService();
 
-  // 1. LISTAR: Rota limpa da tabela de Publicações
   Future<List<Publicacao>> listarPublicacoes() async {
-    final response = await _apiService.get(
-      '${ApiConstants.publicacoes}?select=*,midias:MidiasPublicacoes(*)&order=dataPublicacao.desc',
-    );
+    final response = await _apiService.get('publicacoes/listar');
 
     if (response is! List) {
       throw Exception('Formato de publicações inválido.');
@@ -23,17 +20,14 @@ class PublicacaoService {
         .toList();
   }
 
-  // 2. BUSCAR POR ID: Filtro na URL do Supabase (?id=eq.$id)
   Future<Publicacao> buscarPublicacao(int id) async {
-    final response = await _apiService.get(
-      '${ApiConstants.publicacoes}?id=eq.$id',
-    );
+    final response = await _apiService.get('publicacoes/buscar/$id');
 
-    if (response is! List || response.isEmpty) {
-      throw Exception('Publicação não encontrada.');
+    if (response is! Map) {
+      throw Exception('Formato da publicação inválido.');
     }
 
-    return Publicacao.fromJson(Map<String, dynamic>.from(response.first));
+    return Publicacao.fromJson(Map<String, dynamic>.from(response));
   }
 
   // 3. CADASTRAR: Insere direto na tabela adicionando o usuário logado e a empresa 1

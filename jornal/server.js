@@ -39,6 +39,10 @@ app.use("/tema", temaRoutes);
 
 app.use("/midia", midiaRoutes);
 
-app.listen(3000, () => {
-    console.log("Servidor rodando na porta 3000");
-});
+if (require.main === module) {
+    app.listen(3000, () => {
+        console.log("Servidor rodando na porta 3000");
+    });
+}
+
+module.exports = app;

@@ -1,34 +1,54 @@
 import 'dart:convert';
+import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
+import '../core/constants/api_constants.dart';
 
 class AuthService {
   Future<void> login({required String email, required String senha}) async {
-    // DESVIO TEMPORÁRIO COMPLETO: Injeta todas as claims de permissão que o seu app exige
+    final url = Uri.parse('${ApiConstants.baseUrl}/usuarios/login');
+
+    final response = await http.post(
+      url,
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
+      body: jsonEncode({'email': email.trim().toLowerCase(), 'senha': senha}),
+    );
+
+    final dados = jsonDecode(response.body);
+
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      throw Exception(
+        dados is Map && dados['mensagem'] != null
+            ? dados['mensagem']
+            : 'Não foi possível realizar o login.',
+      );
+    }
+
+    if (dados is! Map || dados['token'] == null) {
+      throw Exception('O servidor não retornou um token válido.');
+    }
+
+    final token = dados['token'] as String;
+    final partes = token.split('.');
+
+    if (partes.length != 3) {
+      throw Exception('Token recebido em formato inválido.');
+    }
+
+    final payload = partes[1];
+    final payloadCorrigido = base64Url.normalize(payload);
+    final usuario = jsonDecode(utf8.decode(base64Url.decode(payloadCorrigido)));
+
     final preferencias = await SharedPreferences.getInstance();
 
-    // 1. Salva as credenciais básicas
-    await preferencias.setInt('usuarioId', 1);
-    await preferencias.setString('usuarioEmail', email.toLowerCase().trim());
-
-    // 2. Monta o payload do Token JWT com as informações idênticas ao que o seu backend Node gerava
-    // Isso garante que qualquer decodificador de token nas outras abas libere o acesso!
-    final dadosToken = {
-      'id': 1,
-      'nome': 'Beatriz Admin',
-      'tipo':
-          'ADMINISTRADOR', // Atribui o cargo mais alto para liberar todas as notícias
-      'empresaId': 1, // Vincula com a empresa padrão que criamos
-    };
-
-    // Transforma o objeto acima no formato Base64Url exigido pelo padrão JWT
-    final payloadString = jsonEncode(dadosToken);
-    final payloadBytes = utf8.encode(payloadString);
-    final payloadBase64 = base64Url.encode(payloadBytes).replaceAll('=', '');
-
-    // Salva o token estruturado perfeitamente em 3 partes (header.payload.signature)
-    await preferencias.setString('token', 'ficticio.$payloadBase64.ficticio');
-
-    return;
+    await preferencias.setString('token', token);
+    await preferencias.setInt('usuarioId', usuario['id']);
+    await preferencias.setString('usuarioEmail', email.trim().toLowerCase());
+    await preferencias.setString('usuarioNome', usuario['nome'] ?? '');
+    await preferencias.setString('usuarioTipo', usuario['tipo'] ?? '');
+    await preferencias.setInt('empresaId', usuario['empresaId']);
   }
 
   Future<String> getEmail() async {
@@ -38,8 +58,12 @@ class AuthService {
 
   Future<void> logout() async {
     final preferencias = await SharedPreferences.getInstance();
+
     await preferencias.remove('token');
     await preferencias.remove('usuarioId');
     await preferencias.remove('usuarioEmail');
+    await preferencias.remove('usuarioNome');
+    await preferencias.remove('usuarioTipo');
+    await preferencias.remove('empresaId');
   }
 }

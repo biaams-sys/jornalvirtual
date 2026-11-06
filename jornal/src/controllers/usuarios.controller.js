@@ -28,7 +28,6 @@ const Login = async (req, res) => {
             .update(senha)
             .digest("hex");
 
-        console.log(email, senhaHash);
 
         const usuario = await prisma.usuarios.findUnique({
             where: {
