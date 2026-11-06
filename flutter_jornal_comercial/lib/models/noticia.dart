@@ -21,18 +21,16 @@ class Noticia {
 
   factory Noticia.fromJson(Map<String, dynamic> json) {
     return Noticia(
-      id: json['id'],
-      titulo: json['titulo'] ?? '',
-      subtitulo: json['subtitulo'],
-      texto: json['texto'] ?? '',
-      dataPublicacao: DateTime.parse(
-        json['dataPublicacao'],
-      ),
-      dataAtualizacao: DateTime.parse(
-        json['dataAtualizacao'],
-      ),
-      autor: json['autor'],
-      midias: json['midias'] ?? [],
+      id: int.parse(json['id'].toString()),
+      titulo: json['titulo']?.toString() ?? '',
+      subtitulo: json['subtitulo']?.toString(),
+      texto: json['texto']?.toString() ?? '',
+      dataPublicacao: DateTime.parse(json['dataPublicacao'].toString()),
+      dataAtualizacao: DateTime.parse(json['dataAtualizacao'].toString()),
+      autor: json['autor'] is Map
+          ? Map<String, dynamic>.from(json['autor'])
+          : null,
+      midias: json['midias'] is List ? json['midias'] : [],
     );
   }
 }

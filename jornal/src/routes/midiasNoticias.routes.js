@@ -1,22 +1,26 @@
 const express = require("express");
 const router = express.Router();
 
-const {
-    cadastrar,
-    listar,
-    buscar,
-    excluir
-} = require("../controllers/midiasNoticias.controller");
-
-const uploadMidia = require("../middlewares/upload.midia");
+const controller = require("../controllers/midiasNoticias.controller");
 const { validate } = require("../middlewares/auth");
+const storageController = require("../controllers/storage.controller");
 
-router.post("/cadastrar/:id", validate, uploadMidia, cadastrar);
+router.get("/listar", validate, controller.listar);
 
-router.get("/listar", validate, listar);
+router.get("/buscar/:id", validate, controller.buscar);
 
-router.get("/buscar/:id", validate, buscar);
+router.delete("/excluir/:id", validate, controller.excluir);
 
-router.delete("/excluir/:id", validate, excluir);
+router.post(
+    "/autorizar-upload/:id",
+    validate,
+    storageController.autorizarUploadNoticia
+);
+
+router.post(
+    "/confirmar-upload/:id",
+    validate,
+    storageController.confirmarUploadNoticia
+);
 
 module.exports = router;

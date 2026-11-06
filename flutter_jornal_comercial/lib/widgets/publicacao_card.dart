@@ -33,6 +33,18 @@ class _PublicacaoCardState extends State<PublicacaoCard> {
   bool _carregandoCurtida = false;
   bool _excluindoPublicacao = false;
 
+  String _urlStorage(String caminho) {
+    var path = caminho;
+
+    if (path.startsWith('midias/')) {
+      path = path.substring('midias/'.length);
+    }
+
+    final baseUrl = ApiConstants.supabaseUrl.replaceFirst('/rest/v1', '');
+
+    return '$baseUrl/storage/v1/object/public/midias/$path';
+  }
+
   @override
   void initState() {
     super.initState();
@@ -129,11 +141,7 @@ class _PublicacaoCardState extends State<PublicacaoCard> {
       return fotoString;
     }
 
-    if (fotoString.startsWith('/')) {
-      return '${ApiConstants.baseUrl}$fotoString';
-    }
-
-    return '${ApiConstants.baseUrl}/$fotoString';
+    return _urlStorage(fotoString);
   }
 
   String _formatarData(DateTime data) {
@@ -276,8 +284,9 @@ class _PublicacaoCardState extends State<PublicacaoCard> {
       return path;
     }
 
-    return 'https://hepwnbumziimvfugvjbe.supabase.co/storage/v1/object/public/$path';
+    return _urlStorage(path);
   }
+  //return 'https://hepwnbumziimvfugvjbe.supabase.co/storage/v1/object/public/$path';
 
   bool _ehVideo(dynamic midia) {
     if (midia is! Map) return false;

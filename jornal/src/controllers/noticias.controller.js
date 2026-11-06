@@ -1,4 +1,5 @@
 const prisma = require("../data/prisma");
+const supabase = require("../data/supabase");
 
 const cadastrar = async (req, res) => {
     try {
@@ -179,13 +180,16 @@ const atualizar = async (req, res) => {
 
 const excluir = async (req, res) => {
     try {
-
         const id = Number(req.params.id);
+        const usuario = req.user;
 
         const noticia = await prisma.noticias.findFirst({
             where: {
                 id,
-                empresaId: req.user.empresaId
+                empresaId: usuario.empresaId
+            },
+            include: {
+                midias: true
             }
         });
 
@@ -195,20 +199,34 @@ const excluir = async (req, res) => {
             });
         }
 
-   
         if (
-            noticia.usuarioId !== req.user.id &&
-            req.user.tipo !== "ADMINISTRADOR"
+            noticia.usuarioId !== usuario.id &&
+            usuario.tipo !== "ADMINISTRADOR"
         ) {
             return res.status(403).json({
                 mensagem: "Sem permissão para excluir esta notícia"
             });
         }
 
+        const caminhos = noticia.midias
+            .map(midia => midia.path)
+            .filter(caminho => caminho && !caminho.startsWith("uploads/"))
+            .map(caminho =>
+                caminho.startsWith("midias/")
+                    ? caminho.substring("midias/".length)
+                    : caminho
+            );
+
+        if (caminhos.length > 0) {
+            const { error } = await supabase.storage
+                .from("midias")
+                .remove(caminhos);
+
+            if (error) throw error;
+        }
+
         await prisma.noticias.delete({
-            where: {
-                id
-            }
+            where: { id }
         });
 
         return res.status(200).json({
@@ -216,12 +234,10 @@ const excluir = async (req, res) => {
         });
 
     } catch (erro) {
-
         return res.status(500).json({
             mensagem: "Erro ao excluir notícia",
             erro: erro.message
         });
-
     }
 };
 

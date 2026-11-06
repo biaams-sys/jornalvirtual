@@ -1,5 +1,6 @@
 const prisma = require("../data/prisma");
 const fs = require("fs");
+const supabase = require("../data/supabase");
 
 const cadastrar = async (req, res) => {
     try {
@@ -134,30 +135,44 @@ const listar = async (req, res) => {
 
 
 const buscar = async (req, res) => {
-  try {
-    const id = Number(req.params.id);
+    try {
+        const id = Number(req.params.id);
 
-    const midia = await prisma.midiasPublicacoes.findUnique({
-      where: { id },
-    });
+        const midia = await prisma.midiasPublicacoes.findFirst({
+            where: {
+                id,
+                publicacao: {
+                    empresaId: req.user.empresaId
+                }
+            }
+        });
 
-    if (!midia) {
-      return res.status(404).json({ erro: "Arquivo não encontrado" });
+        if (!midia) {
+            return res.status(404).json({
+                mensagem: "Mídia não encontrada"
+            });
+        }
+
+        const caminho = midia.path.startsWith("midias/")
+            ? midia.path.substring("midias/".length)
+            : midia.path;
+
+        const { data } = supabase.storage
+            .from("midias")
+            .getPublicUrl(caminho);
+
+        return res.redirect(data.publicUrl);
+
+    } catch (erro) {
+        return res.status(500).json({
+            mensagem: "Erro ao buscar mídia",
+            erro: erro.message
+        });
     }
-
-    if (!fs.existsSync(midia.path)) {
-      return res.status(404).json({ erro: "Arquivo não encontrado no servidor" });
-    }
-
-    res.sendFile(midia.path, { root: "." });
-  } catch (erro) {
-    return res.status(500).json({ erro: "Erro ao buscar arquivo" });
-  }
 };
 
 const excluir = async (req, res) => {
     try {
-
         const id = Number(req.params.id);
         const usuario = req.user;
 
@@ -188,8 +203,16 @@ const excluir = async (req, res) => {
             });
         }
 
-        if (fs.existsSync(midia.path)) {
-            fs.unlinkSync(midia.path);
+        const caminho = midia.path.startsWith("midias/")
+            ? midia.path.substring("midias/".length)
+            : midia.path;
+
+        const { error } = await supabase.storage
+            .from("midias")
+            .remove([caminho]);
+
+        if (error) {
+            throw error;
         }
 
         await prisma.midiasPublicacoes.delete({
@@ -203,7 +226,6 @@ const excluir = async (req, res) => {
         });
 
     } catch (erro) {
-
         return res.status(500).json({
             mensagem: "Erro ao excluir mídia",
             erro: erro.message

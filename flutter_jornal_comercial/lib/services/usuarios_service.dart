@@ -3,7 +3,6 @@ import 'dart:convert';
 import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import '../core/constants/api_constants.dart';
 import '../models/usuario.dart';
 import 'api_service.dart';
 
@@ -53,27 +52,22 @@ class UsuarioService {
     }
   }
 
-  // Busca os dados do usuário que está conectado.
   Future<Usuario> buscarUsuarioLogado() async {
     final usuarioId = await _obterUsuarioId();
 
     return buscarUsuarioPorId(usuarioId);
   }
 
-  // Busca os dados de qualquer usuário pelo ID.
   Future<Usuario> buscarUsuarioPorId(int usuarioId) async {
-    // Filtra na tabela Usuarios onde o id é igual ao ID passado
-    final url = '${ApiConstants.usuarios}?id=eq.$usuarioId';
-    final response = await _apiService.get(url);
+    final response = await _apiService.get('/usuarios/buscar/$usuarioId');
 
-    if (response is! List || response.isEmpty) {
-      throw Exception('Usuário não encontrado.');
+    if (response is! Map<String, dynamic>) {
+      throw Exception('Resposta inválida ao buscar usuário.');
     }
 
-    return Usuario.fromJson(Map<String, dynamic>.from(response.first));
+    return Usuario.fromJson(response);
   }
 
-  // Atualiza os dados do usuário.
   Future<Usuario> atualizarUsuario({
     required int usuarioId,
     String? bio,
@@ -84,33 +78,30 @@ class UsuarioService {
       body['bio'] = bio;
     }
 
-    // No Supabase, atualizações usam PATCH com o filtro do ID na URL
-    final url = '${ApiConstants.usuarios}?id=eq.$usuarioId';
+    final response = await _apiService.put(
+      '/usuarios/atualizar/$usuarioId',
+      body: body,
+    );
 
-    // Certifique-se de que a sua classe ApiService execute o método PATCH ou PUT enviando os headers do ApiConstants
-    final response = await _apiService.put(url, body: body);
+    if (response is Map && response['usuario'] is Map) {
+      return Usuario.fromJson(Map<String, dynamic>.from(response['usuario']));
+    }
 
     return buscarUsuarioPorId(usuarioId);
   }
 
-  // Atualiza a foto de perfil do usuário conectado.
   Future<void> atualizarFoto(XFile arquivo) async {
-    final bytes = await arquivo.readAsBytes();
-
     await _apiService.uploadArquivo(
-      '${ApiConstants.usuarios}/foto-perfil',
-      bytes,
+      '/usuarios/foto-perfil',
+      await arquivo.readAsBytes(),
       arquivo.name,
     );
   }
 
-  // Atualiza o template do perfil.
   Future<void> atualizarTemplate(int usuarioId, XFile arquivo) async {
-    final bytes = await arquivo.readAsBytes();
-
     await _apiService.uploadArquivo(
-      '${ApiConstants.usuarios}/template/$usuarioId',
-      bytes,
+      '/usuarios/template/$usuarioId',
+      await arquivo.readAsBytes(),
       arquivo.name,
     );
   }

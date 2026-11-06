@@ -8,10 +8,7 @@ import '../../services/historico_noticias_service.dart';
 class NoticiaDetalhesScreen extends StatefulWidget {
   final Noticia noticia;
 
-  const NoticiaDetalhesScreen({
-    super.key,
-    required this.noticia,
-  });
+  const NoticiaDetalhesScreen({super.key, required this.noticia});
 
   @override
   State<NoticiaDetalhesScreen> createState() => _NoticiaDetalhesScreenState();
@@ -25,30 +22,33 @@ class _NoticiaDetalhesScreenState extends State<NoticiaDetalhesScreen> {
   }
 
   String? _getImagem() {
-    if (widget.noticia.midias.isEmpty) {
-      return null;
+    for (final midia in widget.noticia.midias) {
+      if (midia is! Map) continue;
+
+      final mimeType = midia['mimeType']?.toString() ?? '';
+
+      if (!mimeType.startsWith('image/')) continue;
+
+      final path = midia['path'];
+
+      if (path == null || path.toString().isEmpty) continue;
+
+      var caminho = path.toString();
+
+      if (caminho.startsWith('http://') || caminho.startsWith('https://')) {
+        return caminho;
+      }
+
+      if (caminho.startsWith('midias/')) {
+        caminho = caminho.substring('midias/'.length);
+      }
+
+      final baseUrl = ApiConstants.supabaseUrl.replaceFirst('/rest/v1', '');
+
+      return '$baseUrl/storage/v1/object/public/midias/$caminho';
     }
 
-    final primeiraMidia = widget.noticia.midias.first;
-
-    if (primeiraMidia is! Map) {
-      return null;
-    }
-
-    final path = primeiraMidia['path'];
-
-    if (path == null || path.toString().isEmpty) {
-      return null;
-    }
-
-    final caminho = path.toString();
-
-    if (caminho.startsWith('http://') ||
-        caminho.startsWith('https://')) {
-      return caminho;
-    }
-
-    return '${ApiConstants.baseUrl}/$caminho';
+    return null;
   }
 
   String _formatarData(DateTime data) {
@@ -75,12 +75,7 @@ class _NoticiaDetalhesScreenState extends State<NoticiaDetalhesScreen> {
                   children: [
                     if (imagem != null) _buildImagem(imagem),
                     Padding(
-                      padding: const EdgeInsets.fromLTRB(
-                        20,
-                        34,
-                        20,
-                        40,
-                      ),
+                      padding: const EdgeInsets.fromLTRB(20, 34, 20, 40),
                       child: _buildConteudo(),
                     ),
                   ],
@@ -199,12 +194,8 @@ class _NoticiaDetalhesScreenState extends State<NoticiaDetalhesScreen> {
           padding: const EdgeInsets.symmetric(vertical: 15),
           decoration: const BoxDecoration(
             border: Border(
-              top: BorderSide(
-                color: AppColors.border,
-              ),
-              bottom: BorderSide(
-                color: AppColors.border,
-              ),
+              top: BorderSide(color: AppColors.border),
+              bottom: BorderSide(color: AppColors.border),
             ),
           ),
           child: Row(

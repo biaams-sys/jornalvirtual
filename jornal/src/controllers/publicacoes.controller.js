@@ -1,4 +1,5 @@
 const prisma = require("../data/prisma");
+const supabase = require("../data/supabase");
 
 const cadastrar = async (req, res) => {
     try {
@@ -284,35 +285,50 @@ const atualizar = async (req, res) => {
 
 const excluir = async (req, res) => {
     try {
-
         const id = Number(req.params.id);
 
         const publicacao = await prisma.publicacoes.findFirst({
-
             where: {
                 id,
                 empresaId: req.user.empresaId
+            },
+            include: {
+                midias: true
             }
-
         });
 
         if (!publicacao) {
-
             return res.status(404).json({
                 mensagem: "Publicação não encontrada."
             });
-
         }
 
         if (
             req.user.id !== publicacao.usuarioId &&
             req.user.tipo !== "ADMINISTRADOR"
         ) {
-
             return res.status(403).json({
                 mensagem: "Sem permissão."
             });
+        }
 
+        const caminhos = publicacao.midias
+            .map(midia => midia.path)
+            .filter(path => path && !path.startsWith("uploads/"))
+            .map(path =>
+                path.startsWith("midias/")
+                    ? path.substring("midias/".length)
+                    : path
+            );
+
+        if (caminhos.length > 0) {
+            const { error } = await supabase.storage
+                .from("midias")
+                .remove(caminhos);
+
+            if (error) {
+                throw error;
+            }
         }
 
         await prisma.publicacoes.delete({
@@ -326,12 +342,10 @@ const excluir = async (req, res) => {
         });
 
     } catch (erro) {
-
         return res.status(500).json({
             mensagem: "Erro ao excluir publicação.",
             erro: erro.message
         });
-
     }
 };
 

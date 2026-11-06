@@ -4,6 +4,7 @@ const crypto = require("crypto");
 const jsonwebtoken = require("jsonwebtoken");
 const nodemailer = require("nodemailer");
 require("dotenv").config();
+const supabase = require("../data/supabase");
 
 const TIPOS_VALIDOS = [
     "USUARIO",
@@ -413,63 +414,112 @@ const pesquisar = async (req, res) => {
 };
 
 const fotoPerfil = async (req, res) => {
-    const usuarioId = req.user.id;
-    const arquivo = req.file;
-
-    const fs = require("fs");
-
-    const pasta = `uploads/perfil/${usuarioId}`;
-    const caminho = `${pasta}/${arquivo.filename}`;
-
-    if (!fs.existsSync(pasta)) {
-        fs.mkdirSync(pasta, { recursive: true });
-    }
-
-    fs.renameSync(arquivo.path, caminho);
-
-    await prisma.usuarios.update({
-        where: {
-            id: usuarioId
-        },
-        data: {
-            fotoPerfil: caminho
-        }
-    });
-
-    return res.status(200).json({
-        mensagem: "Foto de perfil atualizada",
-        caminho
-    });
-};
-
-const atualizarTemplate = async (req, res) => {
     try {
         const usuarioId = req.user.id;
         const arquivo = req.file;
 
-        const fs = require("fs");
+        const extensoes = {
+            "image/jpeg": "jpg",
+            "image/png": "png",
+            "image/webp": "webp"
+        };
 
-        const pasta = `uploads/templates/${usuarioId}`;
-        const caminho = `${pasta}/${arquivo.filename}`;
+        const extensao = extensoes[arquivo.mimetype];
 
-        if (!fs.existsSync(pasta)) {
-            fs.mkdirSync(pasta, { recursive: true });
+        if (!extensao) {
+            return res.status(400).json({
+                mensagem: "Formato de imagem não permitido."
+            });
         }
 
-        fs.renameSync(arquivo.path, caminho);
+        const nomeArquivo = `${Date.now()}-${crypto.randomUUID()}.${extensao}`;
+        const caminho = `perfil/${usuarioId}/${nomeArquivo}`;
+
+        const { data, error } = await supabase.storage
+            .from("midias")
+            .upload(caminho, arquivo.buffer, {
+                contentType: arquivo.mimetype,
+                upsert: true
+            });
+
+        if (error) throw error;
+
+        const { data: urlData } = supabase.storage
+            .from("midias")
+            .getPublicUrl(data.path);
 
         await prisma.usuarios.update({
             where: {
                 id: usuarioId
             },
             data: {
-                template: caminho
+                fotoPerfil: data.path
+            }
+        });
+
+        return res.status(200).json({
+            mensagem: "Foto de perfil atualizada",
+            caminho: data.path,
+            publicUrl: urlData.publicUrl
+        });
+
+    } catch (erro) {
+        return res.status(500).json({
+            mensagem: "Erro ao atualizar foto de perfil",
+            erro: erro.message
+        });
+    }
+};
+
+
+const atualizarTemplate = async (req, res) => {
+    try {
+        const usuarioId = req.user.id;
+        const arquivo = req.file;
+
+        const extensoes = {
+            "image/jpeg": "jpg",
+            "image/png": "png",
+            "image/webp": "webp"
+        };
+
+        const extensao = extensoes[arquivo.mimetype];
+
+        if (!extensao) {
+            return res.status(400).json({
+                mensagem: "Formato de imagem não permitido."
+            });
+        }
+
+        const nomeArquivo = `${Date.now()}-${crypto.randomUUID()}.${extensao}`;
+        const caminho = `templates/${usuarioId}/${nomeArquivo}`;
+
+        const { data, error } = await supabase.storage
+            .from("midias")
+            .upload(caminho, arquivo.buffer, {
+                contentType: arquivo.mimetype,
+                upsert: true
+            });
+
+        if (error) throw error;
+
+        const { data: urlData } = supabase.storage
+            .from("midias")
+            .getPublicUrl(data.path);
+
+        await prisma.usuarios.update({
+            where: {
+                id: usuarioId
+            },
+            data: {
+                template: data.path
             }
         });
 
         return res.status(200).json({
             mensagem: "Template atualizado com sucesso",
-            caminho
+            caminho: data.path,
+            publicUrl: urlData.publicUrl
         });
 
     } catch (erro) {

@@ -1,7 +1,5 @@
 import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import '../core/constants/api_constants.dart';
 import '../models/publicacao.dart';
 import 'api_service.dart';
 
@@ -30,105 +28,111 @@ class PublicacaoService {
     return Publicacao.fromJson(Map<String, dynamic>.from(response));
   }
 
-  // 3. CADASTRAR: Insere direto na tabela adicionando o usuário logado e a empresa 1
   Future<int> criarPublicacao({required String texto}) async {
-    final prefs = await SharedPreferences.getInstance();
-    final usuarioId = prefs.getInt('usuarioId') ?? 1;
-
     final response = await _apiService.post(
-      ApiConstants.publicacoes,
-      body: {
-        'texto': texto,
-        'usuarioId': usuarioId,
-        'empresaId': 1, // Empresa padrão de teste criada no banco
-      },
+      '/publicacoes/cadastrar',
+      body: {'texto': texto},
     );
 
-    if (response is! List || response.isEmpty) {
-      throw Exception('Não foi possível obter o ID da publicação.');
+    if (response is! Map || response['publicacao'] is! Map) {
+      throw Exception('Não foi possível obter a publicação criada.');
     }
 
-    return int.parse(response.first['id'].toString());
+    final publicacao = Map<String, dynamic>.from(response['publicacao']);
+
+    if (publicacao['id'] == null) {
+      throw Exception('ID da publicação não encontrado.');
+    }
+
+    return int.parse(publicacao['id'].toString());
   }
 
   Future<void> adicionarMidia(int publicacaoId, XFile arquivo) async {
+    final mimeType = arquivo.mimeType;
+
+    if (mimeType == null || mimeType.isEmpty) {
+      throw Exception('Não foi possível identificar o formato do arquivo.');
+    }
+
+    final autorizacao = await _apiService.post(
+      '/midias-publicacoes/autorizar-upload/$publicacaoId',
+      body: {'nomeOriginal': arquivo.name, 'mimeType': mimeType},
+    );
+
+    if (autorizacao is! Map) {
+      throw Exception('Resposta inválida ao autorizar upload.');
+    }
+
+    final signedUrl = autorizacao['signedUrl'];
+    final token = autorizacao['token'];
+    final path = autorizacao['path'];
+
+    if (signedUrl == null || token == null || path == null) {
+      throw Exception('Dados de autorização incompletos.');
+    }
+
     final bytes = await arquivo.readAsBytes();
 
-    final nomeArquivo =
-        '${DateTime.now().millisecondsSinceEpoch}_${arquivo.name}';
-
-    final caminhoArquivo = '$publicacaoId/$nomeArquivo';
-
-    const storageUrl =
-        'https://hepwnbumziimvfugvjbe.supabase.co/storage/v1/object';
-
-    final respostaUpload = await http.post(
-      Uri.parse('$storageUrl/midias/$caminhoArquivo'),
+    final respostaUpload = await http.put(
+      Uri.parse(signedUrl.toString()),
       headers: {
-        'apikey': ApiConstants.apiKey,
-        'Authorization': 'Bearer ${ApiConstants.apiKey}',
-        'Content-Type': arquivo.mimeType ?? 'application/octet-stream',
+        'Authorization': 'Bearer ${token.toString()}',
+        'Content-Type': mimeType,
+        'x-upsert': 'false',
       },
       body: bytes,
     );
 
     if (respostaUpload.statusCode != 200 && respostaUpload.statusCode != 201) {
       throw Exception(
-        'Erro no upload da mídia: ${respostaUpload.statusCode} - ${respostaUpload.body}',
+        'Erro ao enviar mídia: ${respostaUpload.statusCode} - ${respostaUpload.body}',
       );
     }
 
-    final pathPublico = 'midias/$caminhoArquivo';
-
     await _apiService.post(
-      'MidiasPublicacoes',
+      '/midias-publicacoes/confirmar-upload/$publicacaoId',
       body: {
-        'publicacaoId': publicacaoId,
-        'nomeOriginal': arquivo.name,
-        'nomeArquivo': nomeArquivo,
-        'mimeType': arquivo.mimeType ?? 'application/octet-stream',
-        'path': pathPublico,
+        'path': path,
+        'nomeOriginal': autorizacao['nomeOriginal'],
+        'nomeArquivo': autorizacao['nomeArquivo'],
+        'mimeType': autorizacao['mimeType'],
       },
     );
   }
 
   Future<List<dynamic>> listarMidias(int publicacaoId) async {
-    final response = await _apiService.get(
-      'MidiasPublicacoes?select=*&publicacaoId=eq.$publicacaoId',
-    );
+    final response = await _apiService.get('/midias-publicacoes/listar');
 
     if (response is! List) {
       throw Exception('Formato de mídias inválido.');
     }
 
-    return response;
+    return response.where((midia) {
+      if (midia is! Map || midia['publicacaoId'] == null) {
+        return false;
+      }
+
+      return midia['publicacaoId'].toString() == publicacaoId.toString();
+    }).toList();
   }
 
-  // 5. CURTIR: Cria um registro associativo na tabela Curtidas
   Future<void> curtir(int publicacaoId) async {
-    final prefs = await SharedPreferences.getInstance();
-    final usuarioId = prefs.getInt('usuarioId') ?? 1;
-
     await _apiService.post(
-      ApiConstants.curtidas,
-      body: {'usuarioId': usuarioId, 'publicacaoId': publicacaoId},
+      '/curtidas/curtir',
+      body: {'publicacaoId': publicacaoId},
     );
   }
 
-  // 6. DESCURTIR: Deleta filtrando pelo ID da publicação e do usuário conectado
   Future<void> descurtir(int publicacaoId) async {
-    final prefs = await SharedPreferences.getInstance();
-    final usuarioId = prefs.getInt('usuarioId') ?? 1;
-
     await _apiService.delete(
-      '${ApiConstants.curtidas}?publicacaoId=eq.$publicacaoId&usuarioId=eq.$usuarioId',
+      '/curtidas/descurtir',
+      body: {'publicacaoId': publicacaoId},
     );
   }
 
-  // 7. LISTAR COMENTÁRIOS: Filtra a tabela Comentarios pela ID da publicação original
   Future<List<dynamic>> listarComentarios(int publicacaoId) async {
     final response = await _apiService.get(
-      '${ApiConstants.comentarios}?publicacaoId=eq.$publicacaoId',
+      '/comentarios/publicacao/$publicacaoId',
     );
 
     if (response is! List) {
@@ -138,32 +142,25 @@ class PublicacaoService {
     return response;
   }
 
-  // 8. CRIAR COMENTÁRIO: Cria a linha na tabela vinculando o autor logado
   Future<void> criarComentario({
     required int publicacaoId,
     required String texto,
     int? comentarioPaiId,
   }) async {
-    final prefs = await SharedPreferences.getInstance();
-    final usuarioId = prefs.getInt('usuarioId') ?? 1;
-
     final body = <String, dynamic>{
       'publicacaoId': publicacaoId,
       'texto': texto,
-      'usuarioId': usuarioId,
     };
 
     if (comentarioPaiId != null) {
       body['comentarioPaiId'] = comentarioPaiId;
     }
 
-    await _apiService.post(ApiConstants.comentarios, body: body);
+    await _apiService.post('/comentarios/cadastrar', body: body);
   }
 
-  // 9. HASHTAGS: Lista as tags armazenadas na tabela Hashtags
   Future<List<dynamic>> listarRankingHashtags() async {
-    // Forçamos a chamada para a tabela limpa 'Hashtags' tirando qualquer sufixo manual
-    final response = await _apiService.get('Hashtags');
+    final response = await _apiService.get('/hashtags/ranking');
 
     if (response is! List) {
       throw Exception('Formato do ranking de hashtags inválido.');
@@ -172,13 +169,11 @@ class PublicacaoService {
     return response;
   }
 
-  // 10. EXCLUIR PUBLICAÇÃO: Executa o DELETE baseado na ID da linha
   Future<void> excluirPublicacao(int publicacaoId) async {
-    await _apiService.delete('${ApiConstants.publicacoes}?id=eq.$publicacaoId');
+    await _apiService.delete('/publicacoes/excluir/$publicacaoId');
   }
 
-  // 11. EXCLUIR COMENTÁRIO: Executa o DELETE baseado na ID da linha do comentário
   Future<void> excluirComentario(int comentarioId) async {
-    await _apiService.delete('${ApiConstants.comentarios}?id=eq.$comentarioId');
+    await _apiService.delete('/comentarios/$comentarioId');
   }
 }

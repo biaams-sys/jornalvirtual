@@ -723,29 +723,33 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   String? _getImagem(Noticia noticia) {
-    if (noticia.midias.isEmpty) {
-      return null;
+    for (final midia in noticia.midias) {
+      if (midia is! Map) continue;
+
+      final mimeType = midia['mimeType']?.toString() ?? '';
+
+      if (!mimeType.startsWith('image/')) continue;
+
+      final path = midia['path'];
+
+      if (path == null || path.toString().isEmpty) continue;
+
+      var caminho = path.toString();
+
+      if (caminho.startsWith('http://') || caminho.startsWith('https://')) {
+        return caminho;
+      }
+
+      if (caminho.startsWith('midias/')) {
+        caminho = caminho.substring('midias/'.length);
+      }
+
+      final baseUrl = ApiConstants.supabaseUrl.replaceFirst('/rest/v1', '');
+
+      return '$baseUrl/storage/v1/object/public/midias/$caminho';
     }
 
-    final primeiraMidia = noticia.midias.first;
-
-    if (primeiraMidia is! Map) {
-      return null;
-    }
-
-    final path = primeiraMidia['path'];
-
-    if (path == null || path.toString().isEmpty) {
-      return null;
-    }
-
-    final caminho = path.toString();
-
-    if (caminho.startsWith('http://') || caminho.startsWith('https://')) {
-      return caminho;
-    }
-
-    return '${ApiConstants.baseUrl}/$caminho';
+    return null;
   }
 
   Widget _buildLoadingContent() {

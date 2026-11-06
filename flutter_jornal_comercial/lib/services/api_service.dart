@@ -11,13 +11,36 @@ class ApiService {
     return {
       'Content-Type': 'application/json',
       'Accept': 'application/json',
-      if (token != null) 'Authorization': 'Bearer $token',
+      if (token != null && token.isNotEmpty) 'Authorization': 'Bearer $token',
     };
   }
 
   Uri _montarUri(String endpoint) {
     final path = endpoint.startsWith('/') ? endpoint : '/$endpoint';
     return Uri.parse('${ApiConstants.baseUrl}$path');
+  }
+
+  Future<dynamic> uploadArquivo(
+    String endpoint,
+    List<int> bytes,
+    String nomeArquivo,
+  ) async {
+    final request = http.MultipartRequest('POST', _montarUri(endpoint));
+
+    final headers = await _getHeaders();
+    headers.remove('Content-Type');
+
+    request.headers.addAll(headers);
+
+    request.files.add(
+      http.MultipartFile.fromBytes('arquivo', bytes, filename: nomeArquivo),
+    );
+
+    final streamedResponse = await request.send();
+
+    final response = await http.Response.fromStream(streamedResponse);
+
+    return _handleResponse(response);
   }
 
   Future<dynamic> get(String endpoint) async {

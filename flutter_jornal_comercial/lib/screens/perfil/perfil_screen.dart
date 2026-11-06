@@ -351,11 +351,7 @@ class _PerfilScreenState extends State<PerfilScreen> {
       return caminho;
     }
 
-    if (caminho.startsWith('/')) {
-      return '${ApiConstants.baseUrl}$caminho';
-    }
-
-    return '${ApiConstants.baseUrl}/$caminho';
+    return '${ApiConstants.supabaseUrl.replaceFirst('/rest/v1', '')}/storage/v1/object/public/midias/$caminho';
   }
 
   Widget _fotoPadrao({bool carregando = false}) {

@@ -2,11 +2,8 @@ const express = require("express");
 const router = express.Router();
 
 const controller = require("../controllers/midiasPublicacoes.controller");
-const uploadMidia = require("../middlewares/upload.midia");
 const { validate } = require("../middlewares/auth");
 const storageController = require("../controllers/storage.controller");
-
-router.post("/cadastrar/:id", validate, uploadMidia, controller.cadastrar);
 
 router.get("/listar", validate, controller.listar);
 
