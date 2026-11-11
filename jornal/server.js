@@ -5,8 +5,16 @@ const cors = require("cors");
 
 const app = express();
 
+app.use(cors({
+    origin: true,
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization", "Accept"],
+    optionsSuccessStatus: 204
+}));
+
+app.options(/.*/, cors());
+
 app.use(express.json());
-app.use(cors());
 app.use("/uploads", express.static("uploads"));
 
 const usuariosRoutes = require("./src/routes/usuarios.routes");

@@ -13,6 +13,7 @@ const TIPOS_VALIDOS = [
 ];
 
 const Login = async (req, res) => {
+
     try {
         let { email, senha } = req.body;
 
