@@ -125,7 +125,8 @@ const cadastrar = async (req, res) => {
         const novaMidia = await prisma.midiasNoticias.create({
             data: {
                 noticiaId: noticiaId,
-                path: data.path
+                path: data.path,
+                nomeOriginal: arquivo.originalname
             }
         });
 
