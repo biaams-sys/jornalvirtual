@@ -425,11 +425,22 @@ const fotoPerfil = async (req, res) => {
 
         const extensoes = {
             "image/jpeg": "jpg",
+            "image/jpg": "jpg",
             "image/png": "png",
-            "image/webp": "webp"
+            "image/webp": "webp",
+            "image/heic": "heic",
+            "image/heif": "heif"
         };
 
-        const extensao = extensoes[arquivo.mimetype];
+        let extensao = extensoes[arquivo.mimetype];
+
+        // Fallback: se o mimetype não bater, tenta pegar direto pela extensão do arquivo original
+        if (!extensao && arquivo.originalname) {
+            const extOriginal = arquivo.originalname.split(".").pop().toLowerCase();
+            if (["jpg", "jpeg", "png", "webp", "heic", "heif"].includes(extOriginal)) {
+                extensao = extOriginal;
+            }
+        }
 
         if (!extensao) {
             return res.status(400).json({ mensagem: "Formato de imagem não permitido." });
@@ -438,11 +449,10 @@ const fotoPerfil = async (req, res) => {
         const nomeArquivo = `${Date.now()}-${crypto.randomUUID()}.${extensao}`;
         const caminho = `perfil/${usuarioId}/${nomeArquivo}`;
 
-        // Envio direto para o bucket do Supabase usando o buffer (sem usar a pasta local 'fs')
         const { data, error } = await supabase.storage
             .from("midias")
             .upload(caminho, arquivo.buffer, {
-                contentType: arquivo.mimetype,
+                contentType: arquivo.mimetype || 'image/jpeg',
                 upsert: true
             });
 
@@ -452,7 +462,6 @@ const fotoPerfil = async (req, res) => {
             .from("midias")
             .getPublicUrl(data.path);
 
-        // Atualiza no banco via Prisma
         await prisma.usuarios.update({
             where: { id: usuarioId },
             data: { fotoPerfil: data.path }
@@ -483,11 +492,22 @@ const atualizarTemplate = async (req, res) => {
 
         const extensoes = {
             "image/jpeg": "jpg",
+            "image/jpg": "jpg",
             "image/png": "png",
-            "image/webp": "webp"
+            "image/webp": "webp",
+            "image/heic": "heic",
+            "image/heif": "heif"
         };
 
-        const extensao = extensoes[arquivo.mimetype];
+        let extensao = extensoes[arquivo.mimetype];
+
+        // Fallback: se o mimetype não bater, tenta pegar direto pela extensão do arquivo original
+        if (!extensao && arquivo.originalname) {
+            const extOriginal = arquivo.originalname.split(".").pop().toLowerCase();
+            if (["jpg", "jpeg", "png", "webp", "heic", "heif"].includes(extOriginal)) {
+                extensao = extOriginal;
+            }
+        }
 
         if (!extensao) {
             return res.status(400).json({ mensagem: "Formato de imagem não permitido." });
@@ -499,7 +519,7 @@ const atualizarTemplate = async (req, res) => {
         const { data, error } = await supabase.storage
             .from("midias")
             .upload(caminho, arquivo.buffer, {
-                contentType: arquivo.mimetype,
+                contentType: arquivo.mimetype || 'image/jpeg',
                 upsert: true
             });
 
