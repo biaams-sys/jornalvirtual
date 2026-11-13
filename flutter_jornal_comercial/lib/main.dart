@@ -1,6 +1,9 @@
+
 import 'package:flutter/material.dart';
+
 import 'screens/auth/login_screen.dart';
 import 'services/notificacao_service.dart';
+import 'services/tema_service.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -15,15 +18,16 @@ class JornalApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      title: 'Jornal Virtual',
-      theme: ThemeData(
-        fontFamily: 'Arial',
-        scaffoldBackgroundColor: const Color(0xFFF8F7FC),
-        colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF6C3CEB)),
-      ),
-      home: const LoginScreen(),
+    return ValueListenableBuilder<ThemeData>(
+      valueListenable: TemaService.temaAtual,
+      builder: (context, tema, child) {
+        return MaterialApp(
+          debugShowCheckedModeBanner: false,
+          title: 'Jornal Virtual',
+          theme: tema,
+          home: const LoginScreen(),
+        );
+      },
     );
   }
 }

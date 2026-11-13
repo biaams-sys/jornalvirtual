@@ -1,3 +1,4 @@
+
 import 'package:flutter/material.dart';
 
 import '../../core/constants/api_constants.dart';
@@ -23,6 +24,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   bool _notificacoesAtivas = false;
   String _termoBusca = '';
+
   late Future<List<Noticia>> _noticiasFuture;
 
   Future<void> _ativarNotificacoes() async {
@@ -36,7 +38,9 @@ class _HomeScreenState extends State<HomeScreen> {
       });
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Notificações desativadas.')),
+        const SnackBar(
+          content: Text('Notificações desativadas.'),
+        ),
       );
 
       return;
@@ -76,12 +80,14 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
+
     _carregarNoticias();
     _carregarPreferenciaNotificacoes();
   }
 
   Future<void> _carregarPreferenciaNotificacoes() async {
-    final ativo = await NotificacaoService.notificacoesEstaoAtivas();
+    final ativo =
+        await NotificacaoService.notificacoesEstaoAtivas();
 
     if (!mounted) return;
 
@@ -97,10 +103,12 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _carregarNoticias() {
-    _noticiasFuture = _newsService.listarNoticias().then((noticias) async {
-      await NotificacaoService.verificarNovasNoticias(noticias);
-      return noticias;
-    });
+    _noticiasFuture = _newsService.listarNoticias().then(
+      (noticias) async {
+        await NotificacaoService.verificarNovasNoticias(noticias);
+        return noticias;
+      },
+    );
   }
 
   Future<void> _atualizarNoticias() async {
@@ -122,7 +130,8 @@ class _HomeScreenState extends State<HomeScreen> {
       final titulo = noticia.titulo.toLowerCase();
       final subtitulo = noticia.subtitulo?.toLowerCase() ?? '';
       final texto = noticia.texto.toLowerCase();
-      final autor = noticia.autor?['nome']?.toString().toLowerCase() ?? '';
+      final autor =
+          noticia.autor?['nome']?.toString().toLowerCase() ?? '';
 
       return titulo.contains(termo) ||
           subtitulo.contains(termo) ||
@@ -133,15 +142,17 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final cores = Theme.of(context).colorScheme;
+
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: cores.surface,
       body: SafeArea(
         child: Column(
           children: [
             Expanded(
               child: RefreshIndicator(
                 onRefresh: _atualizarNoticias,
-                color: AppColors.primary,
+                color: cores.primary,
                 backgroundColor: Colors.white,
                 child: SingleChildScrollView(
                   physics: const AlwaysScrollableScrollPhysics(),
@@ -150,9 +161,13 @@ class _HomeScreenState extends State<HomeScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       _buildHeader(),
+
                       const SizedBox(height: 24),
+
                       _buildSearch(),
+
                       const SizedBox(height: 30),
+
                       FutureBuilder<List<Noticia>>(
                         future: _noticiasFuture,
                         builder: (context, snapshot) {
@@ -176,18 +191,26 @@ class _HomeScreenState extends State<HomeScreen> {
                           }
 
                           if (noticias.isEmpty) {
-                            return _buildEmpty('Nenhuma notícia cadastrada.');
+                            return _buildEmpty(
+                              'Nenhuma notícia cadastrada.',
+                            );
                           }
 
                           return Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               _buildSectionTitle('Destaque do dia'),
+
                               const SizedBox(height: 14),
+
                               _buildFeaturedNews(noticias.first),
+
                               const SizedBox(height: 32),
+
                               _buildSectionTitle('Últimas notícias'),
+
                               const SizedBox(height: 14),
+
                               _buildNewsList(noticias),
                             ],
                           );
@@ -198,6 +221,8 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ),
             ),
+
+            // Navegação inferior mantida.
             _buildBottomNavigation(),
           ],
         ),
@@ -205,52 +230,33 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  // CABEÇALHO
+  // Agora apresenta somente o nome e as notificações.
+
   Widget _buildHeader() {
+    final cores = Theme.of(context).colorScheme;
+
     return Row(
       children: [
-        Container(
-          width: 44,
-          height: 44,
-          decoration: BoxDecoration(
-            color: AppColors.primaryLight,
-            borderRadius: BorderRadius.circular(14),
-          ),
-          child: const Icon(
-            Icons.menu_rounded,
-            size: 24,
-            color: AppColors.primary,
+        Expanded(
+          child: Text(
+            'Jornal Virtual',
+            style: TextStyle(
+              color: cores.onSurface,
+              fontSize: 22,
+              fontWeight: FontWeight.w800,
+              letterSpacing: -0.7,
+            ),
           ),
         ),
-        const SizedBox(width: 13),
-        RichText(
-          text: const TextSpan(
-            children: [
-              TextSpan(
-                text: 'Jornal',
-                style: TextStyle(
-                  color: AppColors.text,
-                  fontSize: 22,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: -0.7,
-                ),
-              ),
-              TextSpan(
-                text: ' Virtual',
-                style: TextStyle(
-                  color: AppColors.primary,
-                  fontSize: 22,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: -0.7,
-                ),
-              ),
-            ],
-          ),
-        ),
-        const Spacer(),
+
         GestureDetector(
           onTap: _ativarNotificacoes,
           child: TweenAnimationBuilder<double>(
-            tween: Tween(begin: 0, end: _notificacoesAtivas ? 1 : 0),
+            tween: Tween(
+              begin: 0,
+              end: _notificacoesAtivas ? 1 : 0,
+            ),
             duration: const Duration(milliseconds: 450),
             curve: Curves.easeOutBack,
             builder: (context, value, child) {
@@ -261,12 +267,12 @@ class _HomeScreenState extends State<HomeScreen> {
                   height: 44,
                   decoration: BoxDecoration(
                     color: _notificacoesAtivas
-                        ? AppColors.primaryLight
+                        ? cores.primary.withValues(alpha: 0.12)
                         : Colors.white,
                     borderRadius: BorderRadius.circular(14),
                     border: Border.all(
                       color: _notificacoesAtivas
-                          ? AppColors.primary.withValues(alpha: 0.35)
+                          ? cores.primary.withValues(alpha: 0.35)
                           : AppColors.border,
                     ),
                   ),
@@ -276,9 +282,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       _notificacoesAtivas
                           ? Icons.notifications_active_rounded
                           : Icons.notifications_none_rounded,
-                      color: _notificacoesAtivas
-                          ? AppColors.primary
-                          : AppColors.text,
+                      color: cores.primary,
                       size: 22,
                     ),
                   ),
@@ -291,7 +295,11 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  // PESQUISA
+
   Widget _buildSearch() {
+    final cores = Theme.of(context).colorScheme;
+
     return Container(
       height: 52,
       padding: const EdgeInsets.symmetric(horizontal: 15),
@@ -302,12 +310,14 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
       child: Row(
         children: [
-          const Icon(
+          Icon(
             Icons.search_rounded,
-            color: AppColors.textSecondary,
+            color: cores.onSurface.withValues(alpha: 0.55),
             size: 22,
           ),
+
           const SizedBox(width: 11),
+
           Expanded(
             child: TextField(
               controller: _pesquisaController,
@@ -316,8 +326,11 @@ class _HomeScreenState extends State<HomeScreen> {
                   _termoBusca = valor;
                 });
               },
-              style: const TextStyle(color: AppColors.text, fontSize: 14),
-              cursorColor: AppColors.primary,
+              style: TextStyle(
+                color: cores.onSurface,
+                fontSize: 14,
+              ),
+              cursorColor: cores.primary,
               decoration: const InputDecoration(
                 border: InputBorder.none,
                 isCollapsed: true,
@@ -329,6 +342,7 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ),
           ),
+
           AnimatedSwitcher(
             duration: const Duration(milliseconds: 180),
             child: _termoBusca.isNotEmpty
@@ -336,6 +350,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     key: const ValueKey('limpar'),
                     onTap: () {
                       _pesquisaController.clear();
+
                       setState(() {
                         _termoBusca = '';
                       });
@@ -346,49 +361,70 @@ class _HomeScreenState extends State<HomeScreen> {
                       size: 20,
                     ),
                   )
-                : const SizedBox(key: ValueKey('vazio'), width: 20, height: 20),
+                : const SizedBox(
+                    key: ValueKey('vazio'),
+                    width: 20,
+                    height: 20,
+                  ),
           ),
         ],
       ),
     );
   }
 
+  // TÍTULOS DAS SEÇÕES
+
   Widget _buildSectionTitle(String title) {
+    final cores = Theme.of(context).colorScheme;
+
     return Row(
       children: [
         Container(
           width: 4,
           height: 21,
           decoration: BoxDecoration(
-            color: AppColors.primary,
+            color: cores.primary,
             borderRadius: BorderRadius.circular(8),
           ),
         ),
+
         const SizedBox(width: 10),
+
         Text(
           title,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 20,
             fontWeight: FontWeight.w800,
-            color: AppColors.text,
+            color: cores.onSurface,
             letterSpacing: -0.4,
           ),
         ),
+
         const SizedBox(width: 12),
-        Expanded(child: Container(height: 1, color: AppColors.border)),
+
+        Expanded(
+          child: Container(
+            height: 1,
+            color: AppColors.border,
+          ),
+        ),
       ],
     );
   }
 
+  // NOTÍCIA EM DESTAQUE
+
   Widget _buildFeaturedNews(Noticia noticia) {
     final imagem = _getImagem(noticia);
+    final cores = Theme.of(context).colorScheme;
 
     return GestureDetector(
       onTap: () {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => NoticiaDetalhesScreen(noticia: noticia),
+            builder: (context) =>
+                NoticiaDetalhesScreen(noticia: noticia),
           ),
         );
       },
@@ -417,7 +453,21 @@ class _HomeScreenState extends State<HomeScreen> {
                 child: Stack(
                   fit: StackFit.expand,
                   children: [
-                    Image.network(imagem, fit: BoxFit.cover),
+                    Image.network(
+                      imagem,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) {
+                        return Container(
+                          color: AppColors.surfaceLight,
+                          child: const Icon(
+                            Icons.image_not_supported_outlined,
+                            size: 35,
+                            color: AppColors.textSecondary,
+                          ),
+                        );
+                      },
+                    ),
+
                     Positioned(
                       left: 15,
                       top: 15,
@@ -430,10 +480,10 @@ class _HomeScreenState extends State<HomeScreen> {
                           color: Colors.white,
                           borderRadius: BorderRadius.circular(8),
                         ),
-                        child: const Text(
+                        child: Text(
                           'DESTAQUE',
                           style: TextStyle(
-                            color: AppColors.primary,
+                            color: cores.primary,
                             fontSize: 10,
                             fontWeight: FontWeight.w800,
                             letterSpacing: 0.8,
@@ -444,6 +494,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   ],
                 ),
               ),
+
             Padding(
               padding: const EdgeInsets.fromLTRB(17, 16, 17, 17),
               child: Column(
@@ -453,15 +504,17 @@ class _HomeScreenState extends State<HomeScreen> {
                     noticia.titulo,
                     maxLines: 3,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      color: AppColors.text,
+                    style: TextStyle(
+                      color: cores.onSurface,
                       fontSize: 21,
                       height: 1.16,
                       fontWeight: FontWeight.w800,
                       letterSpacing: -0.4,
                     ),
                   ),
+
                   const SizedBox(height: 8),
+
                   Text(
                     noticia.subtitulo?.isNotEmpty == true
                         ? noticia.subtitulo!
@@ -474,34 +527,42 @@ class _HomeScreenState extends State<HomeScreen> {
                       height: 1.4,
                     ),
                   ),
+
                   const SizedBox(height: 15),
+
                   Row(
                     children: [
-                      const Icon(
+                      Icon(
                         Icons.person_outline_rounded,
-                        color: AppColors.primary,
+                        color: cores.primary,
                         size: 17,
                       ),
+
                       const SizedBox(width: 5),
+
                       Flexible(
                         child: Text(
                           noticia.autor?['nome'] ?? 'Autor',
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            color: AppColors.text,
+                          style: TextStyle(
+                            color: cores.onSurface,
                             fontSize: 12,
                             fontWeight: FontWeight.w600,
                           ),
                         ),
                       ),
+
                       const SizedBox(width: 14),
-                      const Icon(
+
+                      Icon(
                         Icons.schedule_rounded,
-                        color: AppColors.primary,
+                        color: cores.primary,
                         size: 16,
                       ),
+
                       const SizedBox(width: 5),
+
                       Text(
                         _formatarData(noticia.dataPublicacao),
                         style: const TextStyle(
@@ -520,6 +581,8 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  // LISTA DE NOTÍCIAS
+
   Widget _buildNewsList(List<Noticia> noticias) {
     final ultimasNoticias = noticias.length > 1
         ? noticias.sublist(1)
@@ -528,7 +591,10 @@ class _HomeScreenState extends State<HomeScreen> {
     if (ultimasNoticias.isEmpty) {
       return Container(
         width: double.infinity,
-        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 18),
+        padding: const EdgeInsets.symmetric(
+          horizontal: 18,
+          vertical: 18,
+        ),
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(16),
@@ -536,7 +602,10 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
         child: const Text(
           'Não há outras notícias no momento.',
-          style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
+          style: TextStyle(
+            color: AppColors.textSecondary,
+            fontSize: 13,
+          ),
         ),
       );
     }
@@ -551,15 +620,19 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  // CARD DE NOTÍCIA
+
   Widget _buildNewsCard(Noticia noticia) {
     final imagem = _getImagem(noticia);
+    final cores = Theme.of(context).colorScheme;
 
     return GestureDetector(
       onTap: () {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => NoticiaDetalhesScreen(noticia: noticia),
+            builder: (context) =>
+                NoticiaDetalhesScreen(noticia: noticia),
           ),
         );
       },
@@ -582,13 +655,29 @@ class _HomeScreenState extends State<HomeScreen> {
                   width: 104,
                   height: 104,
                   fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) {
+                    return Container(
+                      width: 104,
+                      height: 104,
+                      color: AppColors.surfaceLight,
+                      child: const Icon(
+                        Icons.image_not_supported_outlined,
+                        color: AppColors.textSecondary,
+                      ),
+                    );
+                  },
                 ),
               ),
+
               const SizedBox(width: 13),
             ],
+
             Expanded(
               child: Padding(
-                padding: const EdgeInsets.only(top: 3, right: 2),
+                padding: const EdgeInsets.only(
+                  top: 3,
+                  right: 2,
+                ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -596,15 +685,17 @@ class _HomeScreenState extends State<HomeScreen> {
                       noticia.titulo,
                       maxLines: 3,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 15.5,
                         height: 1.2,
                         fontWeight: FontWeight.w800,
-                        color: AppColors.text,
+                        color: cores.onSurface,
                         letterSpacing: -0.2,
                       ),
                     ),
+
                     const SizedBox(height: 7),
+
                     Text(
                       noticia.subtitulo?.isNotEmpty == true
                           ? noticia.subtitulo!
@@ -617,15 +708,19 @@ class _HomeScreenState extends State<HomeScreen> {
                         color: AppColors.textSecondary,
                       ),
                     ),
+
                     const SizedBox(height: 9),
+
                     Row(
                       children: [
-                        const Icon(
+                        Icon(
                           Icons.schedule_rounded,
                           size: 14,
-                          color: AppColors.primary,
+                          color: cores.primary,
                         ),
+
                         const SizedBox(width: 4),
+
                         Text(
                           _formatarData(noticia.dataPublicacao),
                           style: const TextStyle(
@@ -633,21 +728,25 @@ class _HomeScreenState extends State<HomeScreen> {
                             fontSize: 11,
                           ),
                         ),
+
                         const Spacer(),
+
                         GestureDetector(
                           onTap: () {
                             Navigator.push(
                               context,
                               MaterialPageRoute(
                                 builder: (context) =>
-                                    NoticiaDetalhesScreen(noticia: noticia),
+                                    NoticiaDetalhesScreen(
+                                  noticia: noticia,
+                                ),
                               ),
                             );
                           },
-                          child: const Text(
+                          child: Text(
                             'Leia mais',
                             style: TextStyle(
-                              color: AppColors.primary,
+                              color: cores.primary,
                               fontSize: 11.5,
                               fontWeight: FontWeight.w700,
                             ),
@@ -665,16 +764,25 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  // RESULTADOS DA PESQUISA
+
   Widget _buildResultadosBusca(List<Noticia> noticias) {
+    final cores = Theme.of(context).colorScheme;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _buildSectionTitle('Resultados da pesquisa'),
+
         const SizedBox(height: 14),
+
         if (noticias.isEmpty)
           Container(
             width: double.infinity,
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 26),
+            padding: const EdgeInsets.symmetric(
+              horizontal: 20,
+              vertical: 26,
+            ),
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(17),
@@ -682,23 +790,27 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
             child: Column(
               children: [
-                const Icon(
+                Icon(
                   Icons.search_off_rounded,
-                  color: AppColors.primary,
+                  color: cores.primary,
                   size: 34,
                 ),
+
                 const SizedBox(height: 10),
-                const Text(
+
+                Text(
                   'Nenhuma notícia encontrada.',
                   textAlign: TextAlign.center,
                   style: TextStyle(
-                    color: AppColors.text,
+                    color: cores.onSurface,
                     fontSize: 14,
                     fontWeight: FontWeight.w700,
                   ),
                 ),
+
                 const SizedBox(height: 5),
-                Text(
+
+                const Text(
                   'Tente pesquisar por outro termo.',
                   textAlign: TextAlign.center,
                   style: TextStyle(
@@ -722,6 +834,9 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  // IMAGEM DA NOTÍCIA
+  // Método corrigido: havia uma declaração duplicada no código anterior.
+
   String? _getImagem(Noticia noticia) {
     for (final midia in noticia.midias) {
       if (midia is! Map) continue;
@@ -732,11 +847,14 @@ class _HomeScreenState extends State<HomeScreen> {
 
       final path = midia['path'];
 
-      if (path == null || path.toString().isEmpty) continue;
+      if (path == null || path.toString().isEmpty) {
+        continue;
+      }
 
       var caminho = path.toString();
 
-      if (caminho.startsWith('http://') || caminho.startsWith('https://')) {
+      if (caminho.startsWith('http://') ||
+          caminho.startsWith('https://')) {
         return caminho;
       }
 
@@ -744,7 +862,10 @@ class _HomeScreenState extends State<HomeScreen> {
         caminho = caminho.substring('midias/'.length);
       }
 
-      final baseUrl = ApiConstants.supabaseUrl.replaceFirst('/rest/v1', '');
+      final baseUrl = ApiConstants.supabaseUrl.replaceFirst(
+        '/rest/v1',
+        '',
+      );
 
       return '$baseUrl/storage/v1/object/public/midias/$caminho';
     }
@@ -752,12 +873,18 @@ class _HomeScreenState extends State<HomeScreen> {
     return null;
   }
 
+  // CARREGAMENTO
+
   Widget _buildLoadingContent() {
+    final cores = Theme.of(context).colorScheme;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _buildSectionTitle('Destaque do dia'),
+
         const SizedBox(height: 14),
+
         Container(
           height: 350,
           width: double.infinity,
@@ -766,19 +893,27 @@ class _HomeScreenState extends State<HomeScreen> {
             borderRadius: BorderRadius.circular(20),
             border: Border.all(color: AppColors.border),
           ),
-          child: const Center(
-            child: CircularProgressIndicator(color: AppColors.primary),
+          child: Center(
+            child: CircularProgressIndicator(
+              color: cores.primary,
+            ),
           ),
         ),
+
         const SizedBox(height: 32),
+
         _buildSectionTitle('Últimas notícias'),
+
         const SizedBox(height: 14),
+
         _buildLoadingList(),
       ],
     );
   }
 
   Widget _buildLoadingList() {
+    final cores = Theme.of(context).colorScheme;
+
     return Column(
       children: List.generate(2, (index) {
         return Padding(
@@ -791,8 +926,10 @@ class _HomeScreenState extends State<HomeScreen> {
               borderRadius: BorderRadius.circular(17),
               border: Border.all(color: AppColors.border),
             ),
-            child: const Center(
-              child: CircularProgressIndicator(color: AppColors.primary),
+            child: Center(
+              child: CircularProgressIndicator(
+                color: cores.primary,
+              ),
             ),
           ),
         );
@@ -800,7 +937,11 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  // ERRO
+
   Widget _buildError(String mensagem) {
+    final cores = Theme.of(context).colorScheme;
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(22),
@@ -811,12 +952,14 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
       child: Column(
         children: [
-          const Icon(
+          Icon(
             Icons.cloud_off_rounded,
-            color: AppColors.primary,
+            color: cores.primary,
             size: 32,
           ),
+
           const SizedBox(height: 10),
+
           Text(
             mensagem,
             textAlign: TextAlign.center,
@@ -825,13 +968,15 @@ class _HomeScreenState extends State<HomeScreen> {
               fontSize: 13,
             ),
           ),
+
           const SizedBox(height: 12),
+
           TextButton(
             onPressed: _atualizarNoticias,
-            child: const Text(
+            child: Text(
               'Tentar novamente',
               style: TextStyle(
-                color: AppColors.primary,
+                color: cores.primary,
                 fontWeight: FontWeight.w700,
               ),
             ),
@@ -840,6 +985,8 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
     );
   }
+
+  // ESTADO VAZIO
 
   Widget _buildEmpty(String mensagem) {
     return Container(
@@ -853,10 +1000,15 @@ class _HomeScreenState extends State<HomeScreen> {
       child: Text(
         mensagem,
         textAlign: TextAlign.center,
-        style: const TextStyle(color: AppColors.textSecondary, fontSize: 13),
+        style: const TextStyle(
+          color: AppColors.textSecondary,
+          fontSize: 13,
+        ),
       ),
     );
   }
+
+  // FORMATAÇÃO DE DATA
 
   String _formatarData(DateTime data) {
     final agora = DateTime.now();
@@ -887,12 +1039,17 @@ class _HomeScreenState extends State<HomeScreen> {
         '${data.year}';
   }
 
+  // NAVEGAÇÃO INFERIOR
+  // Mantida como estava no projeto.
+
   Widget _buildBottomNavigation() {
     return Container(
       height: 76,
       decoration: BoxDecoration(
         color: Colors.white,
-        border: Border(top: BorderSide(color: AppColors.border)),
+        border: Border(
+          top: BorderSide(color: AppColors.border),
+        ),
       ),
       child: Row(
         children: [
@@ -911,7 +1068,9 @@ class _HomeScreenState extends State<HomeScreen> {
               onTap: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => const FeedScreen()),
+                  MaterialPageRoute(
+                    builder: (context) => const FeedScreen(),
+                  ),
                 );
               },
               child: const _NavigationItem(
@@ -928,7 +1087,9 @@ class _HomeScreenState extends State<HomeScreen> {
               onTap: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => const PerfilScreen()),
+                  MaterialPageRoute(
+                    builder: (context) => const PerfilScreen(),
+                  ),
                 );
               },
               child: const _NavigationItem(
@@ -945,7 +1106,9 @@ class _HomeScreenState extends State<HomeScreen> {
               onTap: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => const ConfigScreen()),
+                  MaterialPageRoute(
+                    builder: (context) => const ConfigScreen(),
+                  ),
                 );
               },
               child: const _NavigationItem(
@@ -961,6 +1124,8 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 }
 
+// ITEM DA NAVEGAÇÃO INFERIOR
+
 class _NavigationItem extends StatelessWidget {
   final IconData icon;
   final String label;
@@ -974,12 +1139,19 @@ class _NavigationItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cores = Theme.of(context).colorScheme;
+
     return AnimatedContainer(
       duration: const Duration(milliseconds: 220),
       curve: Curves.easeOut,
-      margin: const EdgeInsets.symmetric(horizontal: 6, vertical: 7),
+      margin: const EdgeInsets.symmetric(
+        horizontal: 6,
+        vertical: 7,
+      ),
       decoration: BoxDecoration(
-        color: selected ? AppColors.primaryLight : Colors.transparent,
+        color: selected
+            ? cores.primary.withValues(alpha: 0.12)
+            : Colors.transparent,
         borderRadius: BorderRadius.circular(15),
       ),
       child: Column(
@@ -991,17 +1163,25 @@ class _NavigationItem extends StatelessWidget {
             child: Icon(
               icon,
               size: 23,
-              color: selected ? AppColors.primary : AppColors.textSecondary,
+              color: selected
+                  ? cores.primary
+                  : AppColors.textSecondary,
             ),
           ),
+
           const SizedBox(height: 4),
+
           Text(
             label,
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 10,
-              fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
-              color: selected ? AppColors.primary : AppColors.textSecondary,
+              fontWeight: selected
+                  ? FontWeight.w700
+                  : FontWeight.w500,
+              color: selected
+                  ? cores.primary
+                  : AppColors.textSecondary,
             ),
           ),
         ],

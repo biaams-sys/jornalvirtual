@@ -1,3 +1,4 @@
+
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
@@ -16,25 +17,23 @@ class NovaPublicacaoModal extends StatefulWidget {
       _NovaPublicacaoModalState();
 }
 
-class _NovaPublicacaoModalState
-    extends State<NovaPublicacaoModal> {
+class _NovaPublicacaoModalState extends State<NovaPublicacaoModal> {
   final TextEditingController _textoController =
       TextEditingController();
 
-  final PublicacaoService _service =
-      PublicacaoService();
-
+  final PublicacaoService _service = PublicacaoService();
   final ImagePicker _picker = ImagePicker();
 
   bool _carregando = false;
-
   XFile? _midiaSelecionada;
+
+  ColorScheme get _cores => Theme.of(context).colorScheme;
 
   Future<void> _selecionarMidia() async {
     try {
       final arquivo = await _picker.pickMedia();
 
-      if (arquivo == null) return;
+      if (arquivo == null || !mounted) return;
 
       setState(() {
         _midiaSelecionada = arquivo;
@@ -44,9 +43,7 @@ class _NovaPublicacaoModalState
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(
-            'Não foi possível selecionar a mídia: $e',
-          ),
+          content: Text('Não foi possível selecionar a mídia: $e'),
         ),
       );
     }
@@ -58,12 +55,9 @@ class _NovaPublicacaoModalState
     if (texto.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text(
-            'Digite algo antes de publicar.',
-          ),
+          content: Text('Digite algo antes de publicar.'),
         ),
       );
-
       return;
     }
 
@@ -72,26 +66,17 @@ class _NovaPublicacaoModalState
     });
 
     try {
-      final publicacaoId =
-          await _service.criarPublicacao(
+      final publicacaoId = await _service.criarPublicacao(
         texto: texto,
       );
 
-      print('ID DA PUBLICAÇÃO: $publicacaoId');
+      debugPrint('ID DA PUBLICAÇÃO: $publicacaoId');
 
       if (_midiaSelecionada != null) {
-        print(
-          'CAMINHO DA MÍDIA: ${_midiaSelecionada!.path}',
+        await _service.adicionarMidia(
+          publicacaoId,
+          _midiaSelecionada!,
         );
-
-        print(
-          'NOME DA MÍDIA: ${_midiaSelecionada!.name}',
-        );
-
-     await _service.adicionarMidia(
-  publicacaoId,
-  _midiaSelecionada!,
-);
       }
 
       if (!mounted) return;
@@ -102,23 +87,18 @@ class _NovaPublicacaoModalState
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text(
-            'Publicação criada com sucesso!',
-          ),
+          content: Text('Publicação criada com sucesso!'),
         ),
       );
     } catch (e) {
       if (!mounted) return;
 
-      print('ERRO AO PUBLICAR: $e');
+      debugPrint('ERRO AO PUBLICAR: $e');
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            e.toString().replaceFirst(
-              'Exception: ',
-              '',
-            ),
+            e.toString().replaceFirst('Exception: ', ''),
           ),
         ),
       );
@@ -139,8 +119,12 @@ class _NovaPublicacaoModalState
 
   @override
   Widget build(BuildContext context) {
+    final tema = Theme.of(context);
+    final cores = tema.colorScheme;
+
     return Dialog(
-      backgroundColor: Colors.white,
+      backgroundColor: cores.surface,
+      surfaceTintColor: Colors.transparent,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(22),
       ),
@@ -152,16 +136,14 @@ class _NovaPublicacaoModalState
           padding: const EdgeInsets.all(24),
           child: Column(
             mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment:
-                CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
                 children: [
-                  const Expanded(
+                  Expanded(
                     child: Text(
                       'Nova publicação',
-                      style: TextStyle(
-                        fontSize: 23,
+                      style: tema.textTheme.titleLarge?.copyWith(
                         fontWeight: FontWeight.bold,
                       ),
                     ),
@@ -171,139 +153,116 @@ class _NovaPublicacaoModalState
                         ? null
                         : () => Navigator.pop(context),
                     icon: const Icon(Icons.close),
+                    tooltip: 'Fechar',
                   ),
                 ],
               ),
-
               const SizedBox(height: 20),
-
               TextField(
                 controller: _textoController,
                 maxLines: 7,
                 maxLength: 1000,
+                enabled: !_carregando,
+                style: tema.textTheme.bodyMedium,
                 decoration: InputDecoration(
-                  hintText:
-                      'O que está acontecendo?',
+                  hintText: 'O que está acontecendo?',
                   alignLabelWithHint: true,
+                  filled: true,
+                  fillColor: cores.surfaceContainerHighest,
                   border: OutlineInputBorder(
-                    borderRadius:
-                        BorderRadius.circular(14),
+                    borderRadius: BorderRadius.circular(14),
                   ),
-                  focusedBorder:
-                      OutlineInputBorder(
-                    borderRadius:
-                        BorderRadius.circular(14),
-                    borderSide: const BorderSide(
-                      color: Color(0xFFC92768),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(14),
+                    borderSide: BorderSide(
+                      color: cores.outlineVariant,
+                    ),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(14),
+                    borderSide: BorderSide(
+                      color: cores.primary,
                       width: 2,
                     ),
                   ),
                 ),
               ),
-
               const SizedBox(height: 8),
-
-              const Text(
-                'Use #hashtags no texto. Elas serão '
-                'identificadas automaticamente.',
-                style: TextStyle(
-                  color: Colors.grey,
-                  fontSize: 12,
+              Text(
+                'Use #hashtags no texto. Elas serão identificadas automaticamente.',
+                style: tema.textTheme.bodySmall?.copyWith(
+                  color: cores.onSurfaceVariant,
                 ),
               ),
-
               const SizedBox(height: 16),
-
-              Row(
-                children: [
-                  OutlinedButton.icon(
-                    onPressed: _carregando
-                        ? null
-                        : _selecionarMidia,
-                    icon: const Icon(
-                      Icons.photo_library_outlined,
-                    ),
-                    label: const Text(
-                      'Adicionar foto/vídeo',
-                    ),
-                  ),
-                ],
+              OutlinedButton.icon(
+                onPressed: _carregando ? null : _selecionarMidia,
+                icon: const Icon(Icons.photo_library_outlined),
+                label: const Text('Adicionar foto/vídeo'),
               ),
-
               if (_midiaSelecionada != null) ...[
                 const SizedBox(height: 12),
-
                 Container(
                   width: double.infinity,
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFFFF6F8),
-                    borderRadius:
-                        BorderRadius.circular(12),
+                    color: cores.surfaceContainerHighest,
+                    borderRadius: BorderRadius.circular(12),
                     border: Border.all(
-                      color: const Color(0xFFEDE4E7),
+                      color: cores.outlineVariant,
                     ),
                   ),
                   child: Row(
                     children: [
-                      const Icon(
+                      Icon(
                         Icons.attach_file,
-                        color: Color(0xFFC92768),
+                        color: cores.primary,
                       ),
-
                       const SizedBox(width: 8),
-
                       Expanded(
                         child: Text(
                           _midiaSelecionada!.name,
-                          overflow:
-                              TextOverflow.ellipsis,
+                          overflow: TextOverflow.ellipsis,
+                          style: tema.textTheme.bodyMedium,
                         ),
                       ),
-
                       IconButton(
                         onPressed: _carregando
                             ? null
                             : () {
                                 setState(() {
-                                  _midiaSelecionada =
-                                      null;
+                                  _midiaSelecionada = null;
                                 });
                               },
-                        icon: const Icon(
-                          Icons.close,
-                        ),
+                        icon: const Icon(Icons.close),
+                        tooltip: 'Remover mídia',
                       ),
                     ],
                   ),
                 ),
               ],
-
               const SizedBox(height: 20),
-
               SizedBox(
                 width: double.infinity,
                 height: 48,
                 child: ElevatedButton(
-                  onPressed:
-                      _carregando ? null : _publicar,
+                  onPressed: _carregando ? null : _publicar,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor:
-                        const Color(0xFFC92768),
-                    foregroundColor: Colors.white,
+                    backgroundColor: cores.primary,
+                    foregroundColor: cores.onPrimary,
+                    disabledBackgroundColor:
+                        cores.primary.withValues(alpha: 0.5),
                     shape: RoundedRectangleBorder(
-                      borderRadius:
-                          BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(12),
                     ),
                   ),
                   child: _carregando
-                      ? const SizedBox(
+                      ? SizedBox(
                           width: 21,
                           height: 21,
-                          child:
-                              CircularProgressIndicator(
+                          child: CircularProgressIndicator(
                             strokeWidth: 2,
-                            color: Colors.white,
+                            color: cores.onPrimary,
                           ),
                         )
                       : const Text(

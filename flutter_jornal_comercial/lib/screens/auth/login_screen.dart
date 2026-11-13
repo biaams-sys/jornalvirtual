@@ -1,7 +1,8 @@
+
 import 'package:flutter/material.dart';
 
-import '../../core/theme/app_colors.dart';
 import '../../services/auth_service.dart';
+import '../../services/tema_service.dart';
 import '../home/home_screen.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -40,13 +41,21 @@ class _LoginScreenState extends State<LoginScreen> {
     });
 
     try {
-      await _authService.login(email: email, senha: senha);
+      await _authService.login(
+        email: email,
+        senha: senha,
+      );
+
+      // Carrega o tema correspondente à empresa do usuário.
+      await TemaService.carregarTema();
 
       if (!mounted) return;
 
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (_) => const HomeScreen()),
+        MaterialPageRoute(
+          builder: (_) => const HomeScreen(),
+        ),
       );
     } catch (e) {
       if (!mounted) return;
@@ -55,11 +64,11 @@ class _LoginScreenState extends State<LoginScreen> {
         _erro = e.toString().replaceFirst('Exception: ', '');
       });
     } finally {
-      if (!mounted) return;
-
-      setState(() {
-        _carregando = false;
-      });
+      if (mounted) {
+        setState(() {
+          _carregando = false;
+        });
+      }
     }
   }
 
@@ -72,94 +81,89 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final cores = Theme.of(context).colorScheme;
+
     return Scaffold(
-      backgroundColor: AppColors.surfaceLight,
+      backgroundColor: cores.surface,
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 32),
+            padding: const EdgeInsets.symmetric(
+              horizontal: 28,
+              vertical: 32,
+            ),
             child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 410),
+              constraints: const BoxConstraints(maxWidth: 430),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Center(
                     child: Column(
                       children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Container(
-                              width: 8,
-                              height: 8,
-                              decoration: const BoxDecoration(
-                                color: AppColors.primary,
-                                shape: BoxShape.circle,
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            Flexible(
-                              child: Text(
-                                'JORNAL VIRTUAL',
-                                textAlign: TextAlign.center,
-                                style: TextStyle(
-                                  color: AppColors.text,
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.w800,
-                                  letterSpacing: 1.2,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-
-                        const SizedBox(height: 9),
-
                         Container(
-                          width: 46,
-                          height: 2,
-                          color: AppColors.primary,
+                          width: 58,
+                          height: 58,
+                          decoration: BoxDecoration(
+                            color: cores.primary.withValues(alpha: 0.10),
+                            borderRadius: BorderRadius.circular(17),
+                          ),
+                          child: Icon(
+                            Icons.newspaper_rounded,
+                            size: 29,
+                            color: cores.primary,
+                          ),
+                        ),
+                        const SizedBox(height: 14),
+                        Text(
+                          'JORNAL VIRTUAL',
+                          style: TextStyle(
+                            color: cores.onSurface,
+                            fontSize: 15,
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: 1.5,
+                          ),
+                        ),
+                        const SizedBox(height: 7),
+                        Container(
+                          width: 38,
+                          height: 3,
+                          decoration: BoxDecoration(
+                            color: cores.primary,
+                            borderRadius: BorderRadius.circular(5),
+                          ),
                         ),
                       ],
                     ),
                   ),
 
-                  const SizedBox(height: 68),
+                  const SizedBox(height: 62),
 
-                  const Text(
-                    'Entre no\nJornal Virtual.',
+                  Text(
+                    'Bem-vindo!',
                     style: TextStyle(
-                      color: AppColors.text,
-                      fontSize: 34,
-                      height: 1.08,
+                      color: cores.onSurface,
+                      fontSize: 32,
                       fontWeight: FontWeight.w800,
                       letterSpacing: -1,
                     ),
                   ),
 
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 10),
 
-                  const Text(
-                    'Acompanhe as notícias e publicações da sua empresa.',
+                  Text(
+                    'Entre na plataforma para acompanhar as notícias e publicações da sua empresa.',
                     style: TextStyle(
-                      color: AppColors.textSecondary,
+                      color: cores.onSurface.withValues(alpha: 0.65),
                       fontSize: 14,
-                      height: 1.45,
+                      height: 1.6,
                     ),
                   ),
 
-                  const SizedBox(height: 38),
+                  const SizedBox(height: 35),
 
-                  const Text(
-                    'E-mail',
-                    style: TextStyle(
-                      color: AppColors.text,
-                      fontSize: 13,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
+                  _buildLabel('E-mail', cores.onSurface),
 
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 9),
 
                   TextField(
                     controller: _emailController,
@@ -168,21 +172,15 @@ class _LoginScreenState extends State<LoginScreen> {
                     decoration: _inputDecoration(
                       hint: 'seuemail@email.com',
                       icon: Icons.mail_outline_rounded,
+                      cores: cores,
                     ),
                   ),
 
                   const SizedBox(height: 22),
 
-                  const Text(
-                    'Senha',
-                    style: TextStyle(
-                      color: AppColors.text,
-                      fontSize: 13,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
+                  _buildLabel('Senha', cores.onSurface),
 
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 9),
 
                   TextField(
                     controller: _senhaController,
@@ -192,6 +190,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     decoration: _inputDecoration(
                       hint: 'Digite sua senha',
                       icon: Icons.lock_outline_rounded,
+                      cores: cores,
                       suffix: IconButton(
                         onPressed: () {
                           setState(() {
@@ -202,8 +201,8 @@ class _LoginScreenState extends State<LoginScreen> {
                           _mostrarSenha
                               ? Icons.visibility_off_outlined
                               : Icons.visibility_outlined,
+                          color: cores.onSurface.withValues(alpha: 0.55),
                           size: 20,
-                          color: AppColors.textSecondary,
                         ),
                       ),
                     ),
@@ -211,25 +210,22 @@ class _LoginScreenState extends State<LoginScreen> {
 
                   if (_erro != null) ...[
                     const SizedBox(height: 16),
-
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Icon(
+                        Icon(
                           Icons.error_outline_rounded,
-                          color: AppColors.error,
+                          color: cores.error,
                           size: 18,
                         ),
-
                         const SizedBox(width: 8),
-
                         Expanded(
                           child: Text(
                             _erro!,
-                            style: const TextStyle(
-                              color: AppColors.error,
+                            style: TextStyle(
+                              color: cores.error,
                               fontSize: 13,
-                              height: 1.3,
+                              height: 1.4,
                             ),
                           ),
                         ),
@@ -241,21 +237,23 @@ class _LoginScreenState extends State<LoginScreen> {
 
                   SizedBox(
                     width: double.infinity,
-                    height: 52,
+                    height: 54,
                     child: ElevatedButton(
                       onPressed: _carregando ? null : _login,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primary,
+                        backgroundColor: cores.primary,
                         foregroundColor: Colors.white,
+                        disabledBackgroundColor:
+                            cores.primary.withValues(alpha: 0.55),
                         elevation: 0,
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
+                          borderRadius: BorderRadius.circular(13),
                         ),
                       ),
                       child: _carregando
                           ? const SizedBox(
-                              width: 20,
-                              height: 20,
+                              width: 21,
+                              height: 21,
                               child: CircularProgressIndicator(
                                 color: Colors.white,
                                 strokeWidth: 2,
@@ -266,7 +264,7 @@ class _LoginScreenState extends State<LoginScreen> {
                               style: TextStyle(
                                 fontSize: 14,
                                 fontWeight: FontWeight.w800,
-                                letterSpacing: 0.2,
+                                letterSpacing: 0.3,
                               ),
                             ),
                     ),
@@ -275,25 +273,13 @@ class _LoginScreenState extends State<LoginScreen> {
                   const SizedBox(height: 42),
 
                   Center(
-                    child: Column(
-                      children: [
-                        Container(
-                          width: 30,
-                          height: 1,
-                          color: AppColors.primaryLight,
-                        ),
-
-                        const SizedBox(height: 12),
-
-                        const Text(
-                          'Informação que conecta.',
-                          style: TextStyle(
-                            color: AppColors.textSecondary,
-                            fontSize: 11,
-                            letterSpacing: 0.3,
-                          ),
-                        ),
-                      ],
+                    child: Text(
+                      'Informação que conecta.',
+                      style: TextStyle(
+                        color: cores.onSurface.withValues(alpha: 0.55),
+                        fontSize: 12,
+                        letterSpacing: 0.3,
+                      ),
                     ),
                   ),
                 ],
@@ -305,30 +291,59 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
+  Widget _buildLabel(String texto, Color cor) {
+    return Text(
+      texto,
+      style: TextStyle(
+        color: cor,
+        fontSize: 13,
+        fontWeight: FontWeight.w700,
+      ),
+    );
+  }
+
   InputDecoration _inputDecoration({
     required String hint,
     required IconData icon,
+    required ColorScheme cores,
     Widget? suffix,
   }) {
     return InputDecoration(
       hintText: hint,
-      hintStyle: const TextStyle(color: AppColors.textLight, fontSize: 14),
-      prefixIcon: Icon(icon, size: 20, color: AppColors.textSecondary),
+      hintStyle: TextStyle(
+        color: cores.onSurface.withValues(alpha: 0.4),
+        fontSize: 14,
+      ),
+      prefixIcon: Icon(
+        icon,
+        size: 20,
+        color: cores.onSurface.withValues(alpha: 0.55),
+      ),
       suffixIcon: suffix,
       filled: true,
-      fillColor: Colors.white,
-      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 15),
+      fillColor: cores.surface,
+      contentPadding: const EdgeInsets.symmetric(
+        horizontal: 14,
+        vertical: 16,
+      ),
       border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(10),
-        borderSide: const BorderSide(color: AppColors.border),
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(
+          color: cores.outline.withValues(alpha: 0.5),
+        ),
       ),
       enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(10),
-        borderSide: const BorderSide(color: AppColors.border),
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(
+          color: cores.outline.withValues(alpha: 0.5),
+        ),
       ),
       focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(10),
-        borderSide: const BorderSide(color: AppColors.primary, width: 1.4),
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(
+          color: cores.primary,
+          width: 1.5,
+        ),
       ),
     );
   }

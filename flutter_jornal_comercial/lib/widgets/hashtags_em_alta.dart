@@ -1,3 +1,4 @@
+
 import 'package:flutter/material.dart';
 
 import '../services/publicacao_service.dart';
@@ -5,7 +6,10 @@ import '../services/publicacao_service.dart';
 class HashtagsEmAlta extends StatefulWidget {
   final ValueChanged<String>? onHashtagSelecionada;
 
-  const HashtagsEmAlta({super.key, this.onHashtagSelecionada});
+  const HashtagsEmAlta({
+    super.key,
+    this.onHashtagSelecionada,
+  });
 
   @override
   State<HashtagsEmAlta> createState() => _HashtagsEmAltaState();
@@ -16,11 +20,14 @@ class _HashtagsEmAltaState extends State<HashtagsEmAlta> {
 
   late Future<List<dynamic>> _hashtagsFuture;
 
+  // Cores próprias do ranking: permanecem iguais em qualquer tema.
   static const List<Color> _coresVibrantes = [
     Color(0xFF8E24AA),
     Color(0xFFD52B6D),
     Color(0xFF00ACC1),
   ];
+
+  ColorScheme get _cores => Theme.of(context).colorScheme;
 
   @override
   void initState() {
@@ -29,17 +36,11 @@ class _HashtagsEmAltaState extends State<HashtagsEmAlta> {
   }
 
   Future<List<dynamic>> _carregarHashtags() async {
-    print('CARREGANDO HASHTAGS...');
-
     try {
-      final resultado = await _service.listarRankingHashtags();
-
-      print('HASHTAGS RECEBIDAS: $resultado');
-
-      return resultado;
+      return await _service.listarRankingHashtags();
     } catch (e, stackTrace) {
-      print('ERRO AO CARREGAR HASHTAGS: $e');
-      print(stackTrace);
+      debugPrint('ERRO AO CARREGAR HASHTAGS: $e');
+      debugPrint('$stackTrace');
       rethrow;
     }
   }
@@ -80,9 +81,9 @@ class _HashtagsEmAltaState extends State<HashtagsEmAlta> {
       width: double.infinity,
       padding: const EdgeInsets.all(20),
       decoration: _decoracao(),
-      child: const Center(
+      child: Center(
         child: CircularProgressIndicator(
-          color: Color(0xFFD52B6D),
+          color: _cores.primary,
           strokeWidth: 2.5,
         ),
       ),
@@ -94,14 +95,21 @@ class _HashtagsEmAltaState extends State<HashtagsEmAlta> {
       width: double.infinity,
       padding: const EdgeInsets.all(20),
       decoration: _decoracao(),
-      child: const Column(
+      child: Column(
         children: [
-          Icon(Icons.cloud_off_outlined, color: Color(0xFFD52B6D), size: 32),
-          SizedBox(height: 8),
+          Icon(
+            Icons.cloud_off_outlined,
+            color: _cores.error,
+            size: 32,
+          ),
+          const SizedBox(height: 8),
           Text(
             'Não foi possível carregar o ranking.',
             textAlign: TextAlign.center,
-            style: TextStyle(color: Colors.grey, fontSize: 14),
+            style: TextStyle(
+              color: _cores.onSurfaceVariant,
+              fontSize: 14,
+            ),
           ),
         ],
       ),
@@ -113,14 +121,20 @@ class _HashtagsEmAltaState extends State<HashtagsEmAlta> {
       width: double.infinity,
       padding: const EdgeInsets.all(20),
       decoration: _decoracao(),
-      child: const Column(
+      child: Column(
         children: [
-          Icon(Icons.tag, color: Color(0xFFD52B6D), size: 32),
-          SizedBox(height: 8),
+          Icon(
+            Icons.tag,
+            color: _cores.primary,
+            size: 32,
+          ),
+          const SizedBox(height: 8),
           Text(
             'Ainda não existem hashtags no ranking.',
             textAlign: TextAlign.center,
-            style: TextStyle(color: Colors.grey, fontSize: 14),
+            style: TextStyle(
+              color: _cores.onSurfaceVariant,
+            ),
           ),
         ],
       ),
@@ -133,16 +147,17 @@ class _HashtagsEmAltaState extends State<HashtagsEmAlta> {
         .map((item) {
           final nome = item['nome']?.toString().trim() ?? '';
 
-          final quantidade =
-              int.tryParse(item['quantidadePublicacoes']?.toString() ?? '0') ??
+          final quantidade = int.tryParse(
+                item['quantidadePublicacoes']?.toString() ?? '0',
+              ) ??
               0;
 
           return _HashtagItem(
             nome: nome.isEmpty
                 ? '#sem_nome'
                 : nome.startsWith('#')
-                ? nome
-                : '#$nome',
+                    ? nome
+                    : '#$nome',
             quantidade: quantidade,
           );
         })
@@ -167,31 +182,34 @@ class _HashtagsEmAltaState extends State<HashtagsEmAlta> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             'Assuntos do Momento',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w800,
-              color: Color(0xFF18213D),
-            ),
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w800,
+                  color: _cores.onSurface,
+                ),
           ),
           const SizedBox(height: 16),
           ListView.separated(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
             itemCount: ranking.length,
-            separatorBuilder: (context, index) =>
-                const Divider(height: 16, color: Color(0xFFF0F0F0)),
+            separatorBuilder: (context, index) => Divider(
+              height: 16,
+              color: _cores.outlineVariant,
+            ),
             itemBuilder: (context, index) {
               final item = ranking[index];
               final posicao = index + 1;
+
+              // Cada posição mantém sua cor, independentemente do tema.
               final corDaHashtag =
                   _coresVibrantes[index % _coresVibrantes.length];
 
               final proporcao = quantidadeMaior == quantidadeMenor
                   ? 0.5
                   : (item.quantidade - quantidadeMenor) /
-                        (quantidadeMaior - quantidadeMenor);
+                      (quantidadeMaior - quantidadeMenor);
 
               final tamanhoFonte = 14.0 + (proporcao * 3.0);
 
@@ -233,10 +251,11 @@ class _HashtagsEmAltaState extends State<HashtagsEmAlta> {
                             ),
                             const SizedBox(height: 2),
                             Text(
-                              '${item.quantidade} ${item.quantidade == 1 ? 'publicação' : 'publicações'}',
+                              '${item.quantidade} '
+                              '${item.quantidade == 1 ? 'publicação' : 'publicações'}',
                               style: TextStyle(
                                 fontSize: 12,
-                                color: Colors.grey[600],
+                                color: _cores.onSurfaceVariant,
                               ),
                             ),
                           ],
@@ -244,7 +263,7 @@ class _HashtagsEmAltaState extends State<HashtagsEmAlta> {
                       ),
                       Icon(
                         Icons.chevron_right,
-                        color: Colors.grey[400],
+                        color: _cores.onSurfaceVariant,
                         size: 20,
                       ),
                     ],
@@ -260,8 +279,11 @@ class _HashtagsEmAltaState extends State<HashtagsEmAlta> {
 
   BoxDecoration _decoracao() {
     return BoxDecoration(
-      color: Colors.white,
+      color: _cores.surface,
       borderRadius: BorderRadius.circular(20),
+      border: Border.all(
+        color: _cores.outlineVariant,
+      ),
       boxShadow: [
         BoxShadow(
           color: Colors.black.withValues(alpha: 0.04),
@@ -277,5 +299,8 @@ class _HashtagItem {
   final String nome;
   final int quantidade;
 
-  const _HashtagItem({required this.nome, required this.quantidade});
+  const _HashtagItem({
+    required this.nome,
+    required this.quantidade,
+  });
 }

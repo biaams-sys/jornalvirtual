@@ -27,6 +27,15 @@ class _FeedScreenState extends State<FeedScreen> {
   String _termoPesquisa = '';
   String? _hashtagSelecionada;
 
+  Color get _primaria => Theme.of(context).colorScheme.primary;
+  Color get _texto => Theme.of(context).colorScheme.onSurface;
+  Color get _secundaria => Theme.of(context).colorScheme.secondary;
+  Color get _fundo => Theme.of(context).scaffoldBackgroundColor;
+  Color get _superficie => Theme.of(context).colorScheme.surface;
+  Color get _borda => Theme.of(context).colorScheme.outline;
+  Color get _erro => Theme.of(context).colorScheme.error;
+  Color get _textoBotao => Theme.of(context).colorScheme.onPrimary;
+
   @override
   void initState() {
     super.initState();
@@ -153,7 +162,6 @@ class _FeedScreenState extends State<FeedScreen> {
     }
 
     if (valor is Map) {
-      // Procura os campos de nome mais comuns sem incluir IDs.
       final partes = <String>[];
 
       for (final chave in [
@@ -256,11 +264,13 @@ class _FeedScreenState extends State<FeedScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final cores = Theme.of(context).colorScheme;
+
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F5F7),
+      backgroundColor: _fundo,
       appBar: AppBar(
-        backgroundColor: const Color(0xFFD52B6D),
-        foregroundColor: Colors.white,
+        backgroundColor: cores.primary,
+        foregroundColor: cores.onPrimary,
         elevation: 0,
         title: const Text(
           'Feed',
@@ -276,8 +286,8 @@ class _FeedScreenState extends State<FeedScreen> {
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _abrirNovaPublicacao,
-        backgroundColor: const Color(0xFFC92768),
-        foregroundColor: Colors.white,
+        backgroundColor: cores.primary,
+        foregroundColor: cores.onPrimary,
         icon: const Icon(Icons.add),
         label: const Text(
           'Publicar',
@@ -319,41 +329,45 @@ class _FeedScreenState extends State<FeedScreen> {
           _hashtagSelecionada = null;
         });
       },
+      style: TextStyle(color: _texto),
       decoration: InputDecoration(
         hintText: 'Pesquisar publicações, hashtags ou pessoas...',
         hintStyle: TextStyle(
-          color: Colors.grey[600],
+          color: _secundaria,
           fontSize: 14,
         ),
-        prefixIcon: const Icon(
+        prefixIcon: Icon(
           Icons.search,
-          color: Color(0xFFD52B6D),
+          color: _primaria,
         ),
         suffixIcon: _termoPesquisa.isNotEmpty
             ? IconButton(
                 onPressed: _limparFiltros,
-                icon: const Icon(Icons.close),
+                icon: Icon(
+                  Icons.close,
+                  color: _secundaria,
+                ),
                 tooltip: 'Limpar pesquisa',
               )
             : null,
         filled: true,
-        fillColor: Colors.white,
+        fillColor: _superficie,
         contentPadding: const EdgeInsets.symmetric(
           horizontal: 16,
           vertical: 15,
         ),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(15),
-          borderSide: const BorderSide(color: Color(0xFFE9E1E5)),
+          borderSide: BorderSide(color: _borda),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(15),
-          borderSide: const BorderSide(color: Color(0xFFE9E1E5)),
+          borderSide: BorderSide(color: _borda),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(15),
-          borderSide: const BorderSide(
-            color: Color(0xFFD52B6D),
+          borderSide: BorderSide(
+            color: _primaria,
             width: 1.5,
           ),
         ),
@@ -369,31 +383,31 @@ class _FeedScreenState extends State<FeedScreen> {
         vertical: 9,
       ),
       decoration: BoxDecoration(
-        color: const Color(0xFFFCE7EF),
+        color: _primaria.withValues(alpha: 0.10),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
         children: [
-          const Icon(
+          Icon(
             Icons.tag,
             size: 19,
-            color: Color(0xFFD52B6D),
+            color: _primaria,
           ),
           const SizedBox(width: 8),
           Expanded(
             child: Text(
               'Filtrando por #$_hashtagSelecionada',
-              style: const TextStyle(
-                color: Color(0xFFC92768),
+              style: TextStyle(
+                color: _primaria,
                 fontWeight: FontWeight.w600,
               ),
             ),
           ),
           TextButton(
             onPressed: _limparFiltros,
-            child: const Text(
+            child: Text(
               'Limpar filtros',
-              style: TextStyle(color: Color(0xFFC92768)),
+              style: TextStyle(color: _primaria),
             ),
           ),
         ],
@@ -406,11 +420,11 @@ class _FeedScreenState extends State<FeedScreen> {
       future: _publicacoesFuture,
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(
+          return Center(
             child: Padding(
-              padding: EdgeInsets.all(40),
+              padding: const EdgeInsets.all(40),
               child: CircularProgressIndicator(
-                color: Color(0xFFD52B6D),
+                color: _primaria,
               ),
             ),
           );
@@ -421,16 +435,23 @@ class _FeedScreenState extends State<FeedScreen> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(
+                Icon(
                   Icons.error_outline,
                   size: 45,
-                  color: Colors.grey,
+                  color: _erro,
                 ),
                 const SizedBox(height: 10),
-                const Text('Não foi possível carregar o feed.'),
+                Text(
+                  'Não foi possível carregar o feed.',
+                  style: TextStyle(color: _texto),
+                ),
                 const SizedBox(height: 10),
                 ElevatedButton(
                   onPressed: _atualizarFeed,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: _primaria,
+                    foregroundColor: _textoBotao,
+                  ),
                   child: const Text('Tentar novamente'),
                 ),
               ],
@@ -448,31 +469,33 @@ class _FeedScreenState extends State<FeedScreen> {
             child: Container(
               padding: const EdgeInsets.all(30),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: _superficie,
                 borderRadius: BorderRadius.circular(18),
+                border: Border.all(color: _borda),
               ),
-              child: const Column(
+              child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Icon(
                     Icons.forum_outlined,
                     size: 50,
-                    color: Color(0xFFC92768),
+                    color: _primaria,
                   ),
-                  SizedBox(height: 12),
+                  const SizedBox(height: 12),
                   Text(
                     'Ainda não há publicações.',
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
+                      color: _texto,
                     ),
                   ),
-                  SizedBox(height: 5),
+                  const SizedBox(height: 5),
                   Text(
                     'Seja a primeira pessoa a publicar!',
                     textAlign: TextAlign.center,
-                    style: TextStyle(color: Colors.grey),
+                    style: TextStyle(color: _secundaria),
                   ),
                 ],
               ),
@@ -485,33 +508,34 @@ class _FeedScreenState extends State<FeedScreen> {
             physics: const AlwaysScrollableScrollPhysics(),
             children: [
               const SizedBox(height: 45),
-              const Icon(
+              Icon(
                 Icons.search_off,
                 size: 50,
-                color: Color(0xFFD52B6D),
+                color: _primaria,
               ),
               const SizedBox(height: 12),
-              const Text(
+              Text(
                 'Nenhuma publicação encontrada.',
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
+                  color: _texto,
                 ),
               ),
               const SizedBox(height: 8),
-              const Text(
+              Text(
                 'Tente outra palavra ou limpe os filtros.',
                 textAlign: TextAlign.center,
-                style: TextStyle(color: Colors.grey),
+                style: TextStyle(color: _secundaria),
               ),
               const SizedBox(height: 12),
               Center(
                 child: TextButton(
                   onPressed: _limparFiltros,
-                  child: const Text(
+                  child: Text(
                     'Limpar filtros',
-                    style: TextStyle(color: Color(0xFFC92768)),
+                    style: TextStyle(color: _primaria),
                   ),
                 ),
               ),
@@ -521,7 +545,8 @@ class _FeedScreenState extends State<FeedScreen> {
 
         return RefreshIndicator(
           onRefresh: _atualizarFeed,
-          color: const Color(0xFFD52B6D),
+          color: _primaria,
+          backgroundColor: _superficie,
           child: ListView.builder(
             physics: const AlwaysScrollableScrollPhysics(),
             padding: const EdgeInsets.only(bottom: 100),

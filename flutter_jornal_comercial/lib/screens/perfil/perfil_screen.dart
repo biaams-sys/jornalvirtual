@@ -1,8 +1,8 @@
+
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../../core/constants/api_constants.dart';
-import '../../core/theme/app_colors.dart';
 import '../../models/usuario.dart';
 import '../../services/noticia_service.dart';
 import '../../services/publicacao_service.dart';
@@ -35,6 +35,9 @@ class _PerfilScreenState extends State<PerfilScreen> {
 
   String? _erro;
 
+  ColorScheme get _cores => Theme.of(context).colorScheme;
+  Color get _fundo => Theme.of(context).scaffoldBackgroundColor;
+
   @override
   void initState() {
     super.initState();
@@ -56,11 +59,13 @@ class _PerfilScreenState extends State<PerfilScreen> {
     }
 
     try {
-      final usuarioLogado = await _usuarioService.buscarUsuarioLogado();
+      final usuarioLogado =
+          await _usuarioService.buscarUsuarioLogado();
 
       final idSolicitado = widget.usuarioId;
 
-      final usuario = idSolicitado == null || idSolicitado == usuarioLogado.id
+      final usuario = idSolicitado == null ||
+              idSolicitado == usuarioLogado.id
           ? usuarioLogado
           : await _usuarioService.buscarUsuarioPorId(idSolicitado);
 
@@ -83,7 +88,9 @@ class _PerfilScreenState extends State<PerfilScreen> {
     }
   }
 
-  Future<_EstatisticasPerfil> _carregarEstatisticas(Usuario usuario) async {
+  Future<_EstatisticasPerfil> _carregarEstatisticas(
+    Usuario usuario,
+  ) async {
     final noticias = await _newsService.listarNoticias();
     final publicacoes = await _publicacaoService.listarPublicacoes();
 
@@ -106,7 +113,10 @@ class _PerfilScreenState extends State<PerfilScreen> {
     );
   }
 
-  bool _pertenceAoUsuario(Map<String, dynamic>? autor, int usuarioId) {
+  bool _pertenceAoUsuario(
+    Map<String, dynamic>? autor,
+    int usuarioId,
+  ) {
     if (autor == null) return false;
 
     final id = autor['id'] ?? autor['usuarioId'];
@@ -120,7 +130,9 @@ class _PerfilScreenState extends State<PerfilScreen> {
     }
 
     try {
-      final arquivo = await _picker.pickImage(source: ImageSource.gallery);
+      final arquivo = await _picker.pickImage(
+        source: ImageSource.gallery,
+      );
 
       if (arquivo == null) return;
 
@@ -155,13 +167,18 @@ class _PerfilScreenState extends State<PerfilScreen> {
     }
 
     try {
-      final arquivo = await _picker.pickImage(source: ImageSource.gallery);
+      final arquivo = await _picker.pickImage(
+        source: ImageSource.gallery,
+      );
 
       if (arquivo == null) return;
 
       setState(() => _uploadandoImagem = true);
 
-      await _usuarioService.atualizarTemplate(_usuario!.id, arquivo);
+      await _usuarioService.atualizarTemplate(
+        _usuario!.id,
+        arquivo,
+      );
 
       if (!mounted) return;
 
@@ -220,13 +237,20 @@ class _PerfilScreenState extends State<PerfilScreen> {
     }
   }
 
-  void _mostrarMensagem(String mensagem, {bool erro = false}) {
+  void _mostrarMensagem(
+    String mensagem, {
+    bool erro = false,
+  }) {
+    final cores = Theme.of(context).colorScheme;
+
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(mensagem),
-        backgroundColor: erro ? AppColors.error : AppColors.success,
+        backgroundColor: erro ? cores.error : cores.primary,
         behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(14),
+        ),
       ),
     );
   }
@@ -241,40 +265,44 @@ class _PerfilScreenState extends State<PerfilScreen> {
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (context) {
+        final cores = Theme.of(context).colorScheme;
+
         return Padding(
           padding: EdgeInsets.only(
             bottom: MediaQuery.of(context).viewInsets.bottom,
           ),
           child: Container(
             padding: const EdgeInsets.all(24),
-            decoration: const BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+            decoration: BoxDecoration(
+              color: cores.surface,
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(28),
+              ),
             ),
             child: SingleChildScrollView(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Text(
+                  Text(
                     'Editar Perfil',
                     style: TextStyle(
                       fontSize: 22,
                       fontWeight: FontWeight.w800,
-                      color: Color(0xFF18213D),
+                      color: cores.onSurface,
                     ),
                   ),
                   const SizedBox(height: 8),
-                  const Text(
+                  Text(
                     'Atualize sua bio',
-                    style: TextStyle(color: Color(0xFF817980)),
+                    style: TextStyle(color: cores.secondary),
                   ),
                   const SizedBox(height: 22),
-                  const Text(
+                  Text(
                     'Bio',
                     style: TextStyle(
                       fontWeight: FontWeight.w700,
-                      color: Color(0xFF18213D),
+                      color: cores.onSurface,
                     ),
                   ),
                   const SizedBox(height: 8),
@@ -282,17 +310,18 @@ class _PerfilScreenState extends State<PerfilScreen> {
                     controller: _bioController,
                     maxLines: 4,
                     maxLength: 300,
+                    style: TextStyle(color: cores.onSurface),
                     decoration: InputDecoration(
                       hintText: 'Escreva uma descrição sobre você...',
                       filled: true,
-                      fillColor: const Color(0xFFFFF7FA),
+                      fillColor: cores.surface,
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(16),
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(16),
-                        borderSide: const BorderSide(
-                          color: Color(0xFFEF3F7A),
+                        borderSide: BorderSide(
+                          color: cores.primary,
                           width: 1.5,
                         ),
                       ),
@@ -305,20 +334,20 @@ class _PerfilScreenState extends State<PerfilScreen> {
                     child: ElevatedButton(
                       onPressed: _salvando ? null : _salvarBio,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFFEF3F7A),
-                        foregroundColor: Colors.white,
+                        backgroundColor: cores.primary,
+                        foregroundColor: cores.onPrimary,
                         elevation: 0,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(16),
                         ),
                       ),
                       child: _salvando
-                          ? const SizedBox(
+                          ? SizedBox(
                               width: 22,
                               height: 22,
                               child: CircularProgressIndicator(
                                 strokeWidth: 2,
-                                color: Colors.white,
+                                color: cores.onPrimary,
                               ),
                             )
                           : const Text('Salvar alterações'),
@@ -355,22 +384,31 @@ class _PerfilScreenState extends State<PerfilScreen> {
       return caminho;
     }
 
-    return '${ApiConstants.supabaseUrl.replaceFirst('/rest/v1', '')}/storage/v1/object/public/midias/$caminho';
+    final caminhoLimpo = caminho.startsWith('/')
+        ? caminho.substring(1)
+        : caminho;
+
+    return '${ApiConstants.supabaseUrl.replaceFirst('/rest/v1', '')}/storage/v1/object/public/midias/$caminhoLimpo';
   }
 
-  Widget _fotoPadrao({bool carregando = false}) {
+  Widget _fotoPadrao(
+    BuildContext context, {
+    bool carregando = false,
+  }) {
+    final cores = Theme.of(context).colorScheme;
+
     return Container(
       width: 112,
       height: 112,
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         shape: BoxShape.circle,
-        color: Color(0xFFFFE1EA),
+        color: cores.primary.withValues(alpha: 0.12),
       ),
       child: carregando
-          ? const Center(
+          ? Center(
               child: CircularProgressIndicator(
                 strokeWidth: 2.5,
-                color: Color(0xFFEF3F7A),
+                color: cores.primary,
               ),
             )
           : Center(
@@ -378,32 +416,33 @@ class _PerfilScreenState extends State<PerfilScreen> {
                 _usuario?.nome.isNotEmpty == true
                     ? _usuario!.nome[0].toUpperCase()
                     : '?',
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 42,
                   fontWeight: FontWeight.w800,
-                  color: Color(0xFFEF3F7A),
+                  color: cores.primary,
                 ),
               ),
             ),
     );
   }
 
-  Widget _fotoPerfil() {
+  Widget _fotoPerfil(BuildContext context) {
+    final cores = Theme.of(context).colorScheme;
     final url = _montarUrlImagem(_usuario?.fotoPerfil);
 
-    Widget foto = url.isEmpty
-        ? _fotoPadrao()
+    final foto = url.isEmpty
+        ? _fotoPadrao(context)
         : Image.network(
             url,
             width: 112,
             height: 112,
             fit: BoxFit.cover,
             errorBuilder: (context, error, stackTrace) {
-              return _fotoPadrao();
+              return _fotoPadrao(context);
             },
             loadingBuilder: (context, child, progresso) {
               if (progresso == null) return child;
-              return _fotoPadrao(carregando: true);
+              return _fotoPadrao(context, carregando: true);
             },
           );
 
@@ -420,10 +459,10 @@ class _PerfilScreenState extends State<PerfilScreen> {
                 shape: BoxShape.circle,
                 color: Colors.black.withValues(alpha: 0.45),
               ),
-              child: const Center(
+              child: Center(
                 child: CircularProgressIndicator(
                   strokeWidth: 2.5,
-                  color: Colors.white,
+                  color: cores.onPrimary,
                 ),
               ),
             ),
@@ -432,15 +471,21 @@ class _PerfilScreenState extends State<PerfilScreen> {
     );
   }
 
-  Widget _templatePadrao() {
+  Widget _templatePadrao(BuildContext context) {
+    final cores = Theme.of(context).colorScheme;
+
     return Container(
       width: double.infinity,
       height: 190,
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [Color(0xFFC92768), Color(0xFFEF3F7A), Color(0xFFFF709F)],
+          colors: [
+            cores.primary,
+            cores.primary.withValues(alpha: 0.82),
+            cores.secondary,
+          ],
         ),
       ),
       child: Stack(
@@ -453,7 +498,7 @@ class _PerfilScreenState extends State<PerfilScreen> {
               height: 150,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: Colors.white.withValues(alpha: 0.12),
+                color: cores.onPrimary.withValues(alpha: 0.12),
               ),
             ),
           ),
@@ -465,7 +510,7 @@ class _PerfilScreenState extends State<PerfilScreen> {
               height: 180,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: Colors.white.withValues(alpha: 0.10),
+                color: cores.onPrimary.withValues(alpha: 0.10),
               ),
             ),
           ),
@@ -474,18 +519,19 @@ class _PerfilScreenState extends State<PerfilScreen> {
     );
   }
 
-  Widget _template() {
+  Widget _template(BuildContext context) {
+    final cores = Theme.of(context).colorScheme;
     final url = _montarUrlImagem(_usuario?.template);
 
     final template = url.isEmpty
-        ? _templatePadrao()
+        ? _templatePadrao(context)
         : Image.network(
             url,
             width: double.infinity,
             height: 190,
             fit: BoxFit.cover,
             errorBuilder: (context, error, stackTrace) {
-              return _templatePadrao();
+              return _templatePadrao(context);
             },
           );
 
@@ -496,9 +542,9 @@ class _PerfilScreenState extends State<PerfilScreen> {
           Positioned.fill(
             child: Container(
               color: Colors.black.withValues(alpha: 0.35),
-              child: const Center(
+              child: Center(
                 child: CircularProgressIndicator(
-                  color: Colors.white,
+                  color: cores.onPrimary,
                   strokeWidth: 2.5,
                 ),
               ),
@@ -514,10 +560,12 @@ class _PerfilScreenState extends State<PerfilScreen> {
                 shape: BoxShape.circle,
               ),
               child: IconButton(
-                onPressed: _uploadandoImagem ? null : _selecionarTemplate,
-                icon: const Icon(
+                onPressed: _uploadandoImagem
+                    ? null
+                    : _selecionarTemplate,
+                icon: Icon(
                   Icons.camera_alt_outlined,
-                  color: Colors.white,
+                  color: cores.onPrimary,
                   size: 21,
                 ),
                 tooltip: 'Alterar template',
@@ -528,12 +576,15 @@ class _PerfilScreenState extends State<PerfilScreen> {
     );
   }
 
-  Widget _informacaoCard({
+  Widget _informacaoCard(
+    BuildContext context, {
     required String numero,
     required String titulo,
     required IconData icone,
     required VoidCallback onTap,
   }) {
+    final cores = Theme.of(context).colorScheme;
+
     return Expanded(
       child: Material(
         color: Colors.transparent,
@@ -543,11 +594,14 @@ class _PerfilScreenState extends State<PerfilScreen> {
           borderRadius: BorderRadius.circular(19),
           child: Container(
             height: 100,
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
+            padding: const EdgeInsets.symmetric(
+              horizontal: 8,
+              vertical: 12,
+            ),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: cores.surface,
               borderRadius: BorderRadius.circular(19),
-              border: Border.all(color: const Color(0xFFF1E7EA)),
+              border: Border.all(color: cores.outline),
               boxShadow: [
                 BoxShadow(
                   color: Colors.black.withValues(alpha: 0.045),
@@ -559,23 +613,27 @@ class _PerfilScreenState extends State<PerfilScreen> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(icone, color: const Color(0xFFEF3F7A), size: 21),
+                Icon(
+                  icone,
+                  color: cores.primary,
+                  size: 21,
+                ),
                 const SizedBox(height: 5),
                 Text(
                   numero,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.w800,
-                    color: Color(0xFF18213D),
+                    color: cores.onSurface,
                   ),
                 ),
                 const SizedBox(height: 2),
                 Text(
                   titulo,
                   textAlign: TextAlign.center,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 10.5,
-                    color: Color(0xFF817980),
+                    color: cores.secondary,
                     fontWeight: FontWeight.w500,
                   ),
                 ),
@@ -593,13 +651,15 @@ class _PerfilScreenState extends State<PerfilScreen> {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) =>
-            AtividadesPerfilScreen(usuarioId: _usuario!.id, tipo: tipo),
+        builder: (_) => AtividadesPerfilScreen(
+          usuarioId: _usuario!.id,
+          tipo: tipo,
+        ),
       ),
     );
   }
 
-  Widget _cardsEstatisticas() {
+  Widget _cardsEstatisticas(BuildContext context) {
     final future = _estatisticasFuture;
 
     if (future == null) return const SizedBox.shrink();
@@ -612,6 +672,7 @@ class _PerfilScreenState extends State<PerfilScreen> {
         return Row(
           children: [
             _informacaoCard(
+              context,
               numero: estatisticas?.noticias.toString() ?? '...',
               titulo: 'Notícias',
               icone: Icons.newspaper_outlined,
@@ -621,6 +682,7 @@ class _PerfilScreenState extends State<PerfilScreen> {
             ),
             const SizedBox(width: 10),
             _informacaoCard(
+              context,
               numero: estatisticas?.publicacoes.toString() ?? '...',
               titulo: 'Publicações',
               icone: Icons.article_outlined,
@@ -630,6 +692,7 @@ class _PerfilScreenState extends State<PerfilScreen> {
             ),
             const SizedBox(width: 10),
             _informacaoCard(
+              context,
               numero: estatisticas?.curtidas.toString() ?? '...',
               titulo: 'Curtidas feitas',
               icone: Icons.favorite_border,
@@ -644,10 +707,12 @@ class _PerfilScreenState extends State<PerfilScreen> {
   }
 
   Widget _conteudo() {
+    final cores = Theme.of(context).colorScheme;
+
     if (_carregando) {
-      return const Center(
+      return Center(
         child: CircularProgressIndicator(
-          color: Color(0xFFEF3F7A),
+          color: cores.primary,
           strokeWidth: 2.5,
         ),
       );
@@ -660,26 +725,34 @@ class _PerfilScreenState extends State<PerfilScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(Icons.error_outline, size: 45, color: AppColors.error),
+              Icon(
+                Icons.error_outline,
+                size: 45,
+                color: cores.error,
+              ),
               const SizedBox(height: 16),
-              const Text(
+              Text(
                 'Não foi possível carregar o perfil',
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 17,
                   fontWeight: FontWeight.bold,
-                  color: Color(0xFF18213D),
+                  color: cores.onSurface,
                 ),
               ),
               const SizedBox(height: 8),
               Text(
                 _erro!,
                 textAlign: TextAlign.center,
-                style: const TextStyle(color: Color(0xFF817980)),
+                style: TextStyle(color: cores.secondary),
               ),
               const SizedBox(height: 18),
               ElevatedButton(
                 onPressed: _carregarPerfil,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: cores.primary,
+                  foregroundColor: cores.onPrimary,
+                ),
                 child: const Text('Tentar novamente'),
               ),
             ],
@@ -689,13 +762,19 @@ class _PerfilScreenState extends State<PerfilScreen> {
     }
 
     if (_usuario == null) {
-      return const Center(child: Text('Usuário não encontrado.'));
+      return Center(
+        child: Text(
+          'Usuário não encontrado.',
+          style: TextStyle(color: cores.onSurface),
+        ),
+      );
     }
 
     final empresa = _usuario!.empresa;
 
     return RefreshIndicator(
-      color: const Color(0xFFEF3F7A),
+      color: cores.primary,
+      backgroundColor: cores.surface,
       onRefresh: _carregarPerfil,
       child: ListView(
         padding: EdgeInsets.zero,
@@ -708,7 +787,7 @@ class _PerfilScreenState extends State<PerfilScreen> {
                 onTap: !_ehMeuPerfil || _uploadandoImagem
                     ? null
                     : _selecionarTemplate,
-                child: _template(),
+                child: _template(context),
               ),
               Positioned(
                 bottom: -57,
@@ -722,7 +801,7 @@ class _PerfilScreenState extends State<PerfilScreen> {
                     padding: const EdgeInsets.all(5),
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      color: Colors.white,
+                      color: cores.surface,
                       boxShadow: [
                         BoxShadow(
                           color: Colors.black.withValues(alpha: 0.16),
@@ -731,7 +810,7 @@ class _PerfilScreenState extends State<PerfilScreen> {
                         ),
                       ],
                     ),
-                    child: _fotoPerfil(),
+                    child: _fotoPerfil(context),
                   ),
                 ),
               ),
@@ -745,10 +824,10 @@ class _PerfilScreenState extends State<PerfilScreen> {
                 Text(
                   _usuario!.nome,
                   textAlign: TextAlign.center,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 26,
                     fontWeight: FontWeight.w800,
-                    color: Color(0xFF18213D),
+                    color: cores.onSurface,
                   ),
                 ),
                 const SizedBox(height: 7),
@@ -756,10 +835,10 @@ class _PerfilScreenState extends State<PerfilScreen> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Icon(
+                      Icon(
                         Icons.business_outlined,
                         size: 16,
-                        color: Color(0xFF817980),
+                        color: cores.secondary,
                       ),
                       const SizedBox(width: 5),
                       Flexible(
@@ -767,10 +846,10 @@ class _PerfilScreenState extends State<PerfilScreen> {
                           empresa['nome']?.toString() ?? '',
                           textAlign: TextAlign.center,
                           overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 13,
                             fontWeight: FontWeight.w600,
-                            color: Color(0xFF817980),
+                            color: cores.secondary,
                           ),
                         ),
                       ),
@@ -783,18 +862,18 @@ class _PerfilScreenState extends State<PerfilScreen> {
                       ? Text(
                           _usuario!.bio!,
                           textAlign: TextAlign.center,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 14,
                             height: 1.5,
-                            color: Color(0xFF817980),
+                            color: cores.secondary,
                           ),
                         )
-                      : const Text(
+                      : Text(
                           'Este usuário ainda não adicionou uma bio.',
                           textAlign: TextAlign.center,
                           style: TextStyle(
                             fontSize: 14,
-                            color: Color(0xFFAAA3A8),
+                            color: cores.secondary.withValues(alpha: 0.7),
                           ),
                         ),
                 ),
@@ -805,20 +884,20 @@ class _PerfilScreenState extends State<PerfilScreen> {
                     vertical: 8,
                   ),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFFFE4EC),
+                    color: cores.primary.withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(30),
                   ),
                   child: Text(
                     _tipoUsuario(_usuario!.tipo),
-                    style: const TextStyle(
-                      color: Color(0xFFEF3F7A),
+                    style: TextStyle(
+                      color: cores.primary,
                       fontWeight: FontWeight.w700,
                       fontSize: 12,
                     ),
                   ),
                 ),
                 const SizedBox(height: 24),
-                _cardsEstatisticas(),
+                _cardsEstatisticas(context),
                 const SizedBox(height: 22),
                 if (_ehMeuPerfil)
                   SizedBox(
@@ -826,7 +905,10 @@ class _PerfilScreenState extends State<PerfilScreen> {
                     height: 52,
                     child: ElevatedButton.icon(
                       onPressed: _abrirEdicao,
-                      icon: const Icon(Icons.edit_outlined, size: 20),
+                      icon: const Icon(
+                        Icons.edit_outlined,
+                        size: 20,
+                      ),
                       label: const Text(
                         'Editar Perfil',
                         style: TextStyle(
@@ -835,8 +917,8 @@ class _PerfilScreenState extends State<PerfilScreen> {
                         ),
                       ),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFFEF3F7A),
-                        foregroundColor: Colors.white,
+                        backgroundColor: cores.primary,
+                        foregroundColor: cores.onPrimary,
                         elevation: 0,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(17),
@@ -855,16 +937,21 @@ class _PerfilScreenState extends State<PerfilScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final cores = Theme.of(context).colorScheme;
+
     return Scaffold(
-      backgroundColor: const Color(0xFFFFF8FA),
+      backgroundColor: _fundo,
       appBar: AppBar(
         title: Text(
           _ehMeuPerfil ? 'Meu Perfil' : 'Perfil',
-          style: const TextStyle(fontSize: 19, fontWeight: FontWeight.w700),
+          style: const TextStyle(
+            fontSize: 19,
+            fontWeight: FontWeight.w700,
+          ),
         ),
         centerTitle: true,
-        backgroundColor: const Color(0xFFC92768),
-        foregroundColor: Colors.white,
+        backgroundColor: cores.primary,
+        foregroundColor: cores.onPrimary,
         elevation: 0,
       ),
       body: _conteudo(),

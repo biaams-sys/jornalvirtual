@@ -1,8 +1,8 @@
+
 import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
 
 import '../core/constants/api_constants.dart';
-import '../core/theme/app_colors.dart';
 import '../models/publicacao.dart';
 import '../services/publicacao_service.dart';
 import '../screens/perfil/perfil_screen.dart';
@@ -33,11 +33,21 @@ class _PublicacaoCardState extends State<PublicacaoCard> {
   bool _carregandoCurtida = false;
   bool _excluindoPublicacao = false;
 
+  ColorScheme get _cores => Theme.of(context).colorScheme;
+
   String _urlStorage(String caminho) {
-    var path = caminho;
+    var path = caminho.trim();
+
+    if (path.startsWith('http://') || path.startsWith('https://')) {
+      return path;
+    }
 
     if (path.startsWith('midias/')) {
       path = path.substring('midias/'.length);
+    }
+
+    while (path.startsWith('/')) {
+      path = path.substring(1);
     }
 
     final baseUrl = ApiConstants.supabaseUrl.replaceFirst('/rest/v1', '');
@@ -50,9 +60,7 @@ class _PublicacaoCardState extends State<PublicacaoCard> {
     super.initState();
 
     _quantidadeCurtidas = widget.publicacao.quantidadeCurtidas;
-
-    _curtida =
-        widget.usuarioId != null &&
+    _curtida = widget.usuarioId != null &&
         widget.publicacao.curtidaPorUsuario(widget.usuarioId!);
   }
 
@@ -62,16 +70,13 @@ class _PublicacaoCardState extends State<PublicacaoCard> {
 
     if (oldWidget.publicacao.id != widget.publicacao.id) {
       _quantidadeCurtidas = widget.publicacao.quantidadeCurtidas;
-
-      _curtida =
-          widget.usuarioId != null &&
+      _curtida = widget.usuarioId != null &&
           widget.publicacao.curtidaPorUsuario(widget.usuarioId!);
     }
   }
 
   int? _idAutor() {
     final autor = widget.publicacao.autor;
-
     if (autor == null) return null;
 
     final id = autor['id'] ?? autor['usuarioId'] ?? autor['usuario_id'];
@@ -96,9 +101,6 @@ class _PublicacaoCardState extends State<PublicacaoCard> {
   void _abrirPerfilAutor() {
     final id = _idAutor();
 
-    debugPrint('Autor da publicação: ${widget.publicacao.autor}');
-    debugPrint('ID identificado: $id');
-
     if (id == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -110,9 +112,11 @@ class _PublicacaoCardState extends State<PublicacaoCard> {
       return;
     }
 
-    Navigator.of(
-      context,
-    ).push(MaterialPageRoute(builder: (_) => PerfilScreen(usuarioId: id)));
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => PerfilScreen(usuarioId: id),
+      ),
+    );
   }
 
   String _tipoAutor() {
@@ -124,7 +128,7 @@ class _PublicacaoCardState extends State<PublicacaoCard> {
       case 'VERIFICADO':
         return 'Verificado';
       default:
-        return 'Aluno';
+        return 'Usuário';
     }
   }
 
@@ -137,7 +141,8 @@ class _PublicacaoCardState extends State<PublicacaoCard> {
 
     final fotoString = foto.toString();
 
-    if (fotoString.startsWith('http://') || fotoString.startsWith('https://')) {
+    if (fotoString.startsWith('http://') ||
+        fotoString.startsWith('https://')) {
       return fotoString;
     }
 
@@ -147,21 +152,10 @@ class _PublicacaoCardState extends State<PublicacaoCard> {
   String _formatarData(DateTime data) {
     final diferenca = DateTime.now().difference(data);
 
-    if (diferenca.inSeconds < 60) {
-      return 'agora';
-    }
-
-    if (diferenca.inMinutes < 60) {
-      return 'há ${diferenca.inMinutes} min';
-    }
-
-    if (diferenca.inHours < 24) {
-      return 'há ${diferenca.inHours} h';
-    }
-
-    if (diferenca.inDays < 7) {
-      return 'há ${diferenca.inDays} d';
-    }
+    if (diferenca.inSeconds < 60) return 'agora';
+    if (diferenca.inMinutes < 60) return 'há ${diferenca.inMinutes} min';
+    if (diferenca.inHours < 24) return 'há ${diferenca.inHours} h';
+    if (diferenca.inDays < 7) return 'há ${diferenca.inDays} d';
 
     return '${data.day.toString().padLeft(2, '0')}/'
         '${data.month.toString().padLeft(2, '0')}/'
@@ -169,37 +163,40 @@ class _PublicacaoCardState extends State<PublicacaoCard> {
   }
 
   Future<void> _excluirPublicacao() async {
-    if (!_ehDonoPublicacao || _excluindoPublicacao) {
-      return;
-    }
+    if (!_ehDonoPublicacao || _excluindoPublicacao) return;
 
     final confirmar = await showDialog<bool>(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Excluir publicação'),
-        content: const Text(
-          'Tem certeza de que deseja excluir esta publicação? '
-          'Essa ação não poderá ser desfeita.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancelar'),
+      builder: (context) {
+        final cores = Theme.of(context).colorScheme;
+
+        return AlertDialog(
+          backgroundColor: cores.surface,
+          title: const Text('Excluir publicação'),
+          content: const Text(
+            'Tem certeza de que deseja excluir esta publicação? '
+            'Essa ação não poderá ser desfeita.',
           ),
-          TextButton(
-            onPressed: () => Navigator.pop(context, true),
-            style: TextButton.styleFrom(foregroundColor: Colors.red),
-            child: const Text('Excluir'),
-          ),
-        ],
-      ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('Cancelar'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(context, true),
+              style: TextButton.styleFrom(
+                foregroundColor: cores.error,
+              ),
+              child: const Text('Excluir'),
+            ),
+          ],
+        );
+      },
     );
 
     if (confirmar != true || !mounted) return;
 
-    setState(() {
-      _excluindoPublicacao = true;
-    });
+    setState(() => _excluindoPublicacao = true);
 
     try {
       await _service.excluirPublicacao(widget.publicacao.id);
@@ -207,7 +204,9 @@ class _PublicacaoCardState extends State<PublicacaoCard> {
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Publicação excluída com sucesso.')),
+        const SnackBar(
+          content: Text('Publicação excluída com sucesso.'),
+        ),
       );
 
       widget.atualizar?.call();
@@ -215,13 +214,13 @@ class _PublicacaoCardState extends State<PublicacaoCard> {
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.toString().replaceFirst('Exception: ', ''))),
+        SnackBar(
+          content: Text(e.toString().replaceFirst('Exception: ', '')),
+        ),
       );
     } finally {
       if (mounted) {
-        setState(() {
-          _excluindoPublicacao = false;
-        });
+        setState(() => _excluindoPublicacao = false);
       }
     }
   }
@@ -229,9 +228,7 @@ class _PublicacaoCardState extends State<PublicacaoCard> {
   Future<void> _alternarCurtida() async {
     if (_carregandoCurtida) return;
 
-    setState(() {
-      _carregandoCurtida = true;
-    });
+    setState(() => _carregandoCurtida = true);
 
     try {
       if (_curtida) {
@@ -241,7 +238,6 @@ class _PublicacaoCardState extends State<PublicacaoCard> {
 
         setState(() {
           _curtida = false;
-
           if (_quantidadeCurtidas > 0) {
             _quantidadeCurtidas--;
           }
@@ -262,13 +258,13 @@ class _PublicacaoCardState extends State<PublicacaoCard> {
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.toString().replaceFirst('Exception: ', ''))),
+        SnackBar(
+          content: Text(e.toString().replaceFirst('Exception: ', '')),
+        ),
       );
     } finally {
       if (mounted) {
-        setState(() {
-          _carregandoCurtida = false;
-        });
+        setState(() => _carregandoCurtida = false);
       }
     }
   }
@@ -286,7 +282,6 @@ class _PublicacaoCardState extends State<PublicacaoCard> {
 
     return _urlStorage(path);
   }
-  //return 'https://hepwnbumziimvfugvjbe.supabase.co/storage/v1/object/public/$path';
 
   bool _ehVideo(dynamic midia) {
     if (midia is! Map) return false;
@@ -305,10 +300,6 @@ class _PublicacaoCardState extends State<PublicacaoCard> {
   }
 
   Widget _buildMidias() {
-    debugPrint(
-      'MÍDIAS DA PUBLICAÇÃO ${widget.publicacao.id}: ${widget.publicacao.midias}',
-    );
-
     if (widget.publicacao.midias.isEmpty) {
       return const SizedBox.shrink();
     }
@@ -317,9 +308,7 @@ class _PublicacaoCardState extends State<PublicacaoCard> {
       children: widget.publicacao.midias.map((midia) {
         final url = _urlMidia(midia);
 
-        if (url.isEmpty) {
-          return const SizedBox.shrink();
-        }
+        if (url.isEmpty) return const SizedBox.shrink();
 
         return Padding(
           padding: const EdgeInsets.only(top: 14),
@@ -331,38 +320,40 @@ class _PublicacaoCardState extends State<PublicacaoCard> {
                     url,
                     width: double.infinity,
                     fit: BoxFit.cover,
-                    loadingBuilder: (context, child, loadingProgress) {
-                      if (loadingProgress == null) {
-                        return child;
-                      }
+                    loadingBuilder: (context, child, progress) {
+                      if (progress == null) return child;
 
                       return const SizedBox(
                         height: 250,
-                        child: Center(child: CircularProgressIndicator()),
+                        child: Center(
+                          child: CircularProgressIndicator(),
+                        ),
                       );
                     },
                     errorBuilder: (context, error, stackTrace) {
-                      debugPrint('ERRO AO CARREGAR MÍDIA: $error');
+                      final cores = Theme.of(context).colorScheme;
 
                       return Container(
                         height: 180,
                         width: double.infinity,
                         decoration: BoxDecoration(
-                          color: const Color(0xFFF8F5F7),
+                          color: cores.surfaceContainerHighest,
                           borderRadius: BorderRadius.circular(14),
                         ),
-                        child: const Column(
+                        child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Icon(
                               Icons.broken_image_outlined,
                               size: 40,
-                              color: Colors.grey,
+                              color: cores.onSurfaceVariant,
                             ),
-                            SizedBox(height: 8),
+                            const SizedBox(height: 8),
                             Text(
                               'Não foi possível carregar a imagem.',
-                              style: TextStyle(color: Colors.grey),
+                              style: TextStyle(
+                                color: cores.onSurfaceVariant,
+                              ),
                             ),
                           ],
                         ),
@@ -378,14 +369,16 @@ class _PublicacaoCardState extends State<PublicacaoCard> {
   @override
   Widget build(BuildContext context) {
     final foto = _fotoAutor();
+    final tema = Theme.of(context);
+    final cores = tema.colorScheme;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: cores.surface,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: const Color(0xFFF0DCE4)),
+        border: Border.all(color: cores.outlineVariant),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.04),
@@ -404,10 +397,13 @@ class _PublicacaoCardState extends State<PublicacaoCard> {
                 customBorder: const CircleBorder(),
                 child: CircleAvatar(
                   radius: 23,
-                  backgroundColor: const Color(0xFFF4D5E2),
+                  backgroundColor: cores.primaryContainer,
                   backgroundImage: foto != null ? NetworkImage(foto) : null,
                   child: foto == null
-                      ? const Icon(Icons.person, color: Color(0xFFC92768))
+                      ? Icon(
+                          Icons.person,
+                          color: cores.onPrimaryContainer,
+                        )
                       : null,
                 ),
               ),
@@ -420,10 +416,8 @@ class _PublicacaoCardState extends State<PublicacaoCard> {
                       onTap: _abrirPerfilAutor,
                       child: Text(
                         _nomeAutor(),
-                        style: const TextStyle(
+                        style: tema.textTheme.titleSmall?.copyWith(
                           fontWeight: FontWeight.bold,
-                          fontSize: 15,
-                          color: Color(0xFF18213D),
                         ),
                       ),
                     ),
@@ -431,9 +425,8 @@ class _PublicacaoCardState extends State<PublicacaoCard> {
                     Text(
                       '${_tipoAutor()} · '
                       '${_formatarData(widget.publicacao.dataPublicacao)}',
-                      style: const TextStyle(
-                        color: AppColors.textSecondary,
-                        fontSize: 12,
+                      style: tema.textTheme.bodySmall?.copyWith(
+                        color: cores.onSurfaceVariant,
                       ),
                     ),
                   ],
@@ -449,15 +442,15 @@ class _PublicacaoCardState extends State<PublicacaoCard> {
                     }
                   },
                   itemBuilder: (context) => [
-                    const PopupMenuItem<String>(
+                    PopupMenuItem<String>(
                       value: 'excluir',
                       child: Row(
                         children: [
-                          Icon(Icons.delete_outline, color: Colors.red),
-                          SizedBox(width: 8),
+                          Icon(Icons.delete_outline, color: cores.error),
+                          const SizedBox(width: 8),
                           Text(
                             'Excluir publicação',
-                            style: TextStyle(color: Colors.red),
+                            style: TextStyle(color: cores.error),
                           ),
                         ],
                       ),
@@ -471,9 +464,9 @@ class _PublicacaoCardState extends State<PublicacaoCard> {
                             height: 22,
                             child: CircularProgressIndicator(strokeWidth: 2),
                           )
-                        : const Icon(
+                        : Icon(
                             Icons.more_horiz,
-                            color: AppColors.textSecondary,
+                            color: cores.onSurfaceVariant,
                           ),
                   ),
                 ),
@@ -484,7 +477,7 @@ class _PublicacaoCardState extends State<PublicacaoCard> {
               widget.publicacao.texto!.isNotEmpty)
             Text(
               widget.publicacao.texto!,
-              style: const TextStyle(fontSize: 15, height: 1.5),
+              style: tema.textTheme.bodyMedium?.copyWith(height: 1.5),
             ),
           if (widget.publicacao.hashtags.isNotEmpty) ...[
             const SizedBox(height: 12),
@@ -492,20 +485,16 @@ class _PublicacaoCardState extends State<PublicacaoCard> {
               spacing: 6,
               runSpacing: 6,
               children: widget.publicacao.hashtags.map<Widget>((hashtag) {
-                if (hashtag is! Map) {
-                  return const SizedBox.shrink();
-                }
+                if (hashtag is! Map) return const SizedBox.shrink();
 
                 final nome = hashtag['nome']?.toString() ?? '';
 
-                if (nome.isEmpty) {
-                  return const SizedBox.shrink();
-                }
+                if (nome.isEmpty) return const SizedBox.shrink();
 
                 return Text(
                   nome,
-                  style: const TextStyle(
-                    color: Color(0xFFC92768),
+                  style: TextStyle(
+                    color: cores.primary,
                     fontWeight: FontWeight.w600,
                   ),
                 );
@@ -514,7 +503,7 @@ class _PublicacaoCardState extends State<PublicacaoCard> {
           ],
           _buildMidias(),
           const SizedBox(height: 16),
-          const Divider(height: 1, color: Color(0xFFF1E8ED)),
+          Divider(height: 1, color: cores.outlineVariant),
           const SizedBox(height: 8),
           Row(
             children: [
@@ -531,17 +520,13 @@ class _PublicacaoCardState extends State<PublicacaoCard> {
                       Icon(
                         _curtida ? Icons.favorite : Icons.favorite_border,
                         size: 21,
-                        color: _curtida
-                            ? const Color(0xFFE83272)
-                            : AppColors.textSecondary,
+                        color: _curtida ? Colors.redAccent : cores.onSurfaceVariant,
                       ),
                       const SizedBox(width: 6),
                       Text(
                         '$_quantidadeCurtidas',
                         style: TextStyle(
-                          color: _curtida
-                              ? const Color(0xFFE83272)
-                              : AppColors.textSecondary,
+                          color: _curtida ? Colors.redAccent : cores.onSurfaceVariant,
                           fontWeight: FontWeight.w500,
                         ),
                       ),
@@ -556,12 +541,12 @@ class _PublicacaoCardState extends State<PublicacaoCard> {
                     context: context,
                     isScrollControlled: true,
                     backgroundColor: Colors.transparent,
-                    builder: (_) =>
-                        ComentariosModal(publicacao: widget.publicacao),
+                    builder: (_) => ComentariosModal(
+                      publicacao: widget.publicacao,
+                    ),
                   );
 
                   if (!mounted) return;
-
                   widget.atualizar?.call();
                 },
                 borderRadius: BorderRadius.circular(30),
@@ -572,15 +557,15 @@ class _PublicacaoCardState extends State<PublicacaoCard> {
                   ),
                   child: Row(
                     children: [
-                      const Icon(
+                      Icon(
                         Icons.chat_bubble_outline,
                         size: 20,
-                        color: AppColors.textSecondary,
+                        color: cores.onSurfaceVariant,
                       ),
                       const SizedBox(width: 6),
                       Text(
                         '${widget.publicacao.quantidadeComentarios}',
-                        style: const TextStyle(color: AppColors.textSecondary),
+                        style: TextStyle(color: cores.onSurfaceVariant),
                       ),
                     ],
                   ),
@@ -610,7 +595,9 @@ class _VideoPublicacaoState extends State<_VideoPublicacao> {
   void initState() {
     super.initState();
 
-    _controller = VideoPlayerController.networkUrl(Uri.parse(widget.url));
+    _controller = VideoPlayerController.networkUrl(
+      Uri.parse(widget.url),
+    );
 
     _inicializarVideo();
   }
@@ -620,13 +607,11 @@ class _VideoPublicacaoState extends State<_VideoPublicacao> {
       await _controller.initialize();
 
       if (!mounted) return;
-
       setState(() {});
     } catch (e) {
       debugPrint('Erro ao carregar vídeo: $e');
 
       if (!mounted) return;
-
       setState(() {});
     }
   }
@@ -639,15 +624,19 @@ class _VideoPublicacaoState extends State<_VideoPublicacao> {
 
   @override
   Widget build(BuildContext context) {
+    final cores = Theme.of(context).colorScheme;
+
     if (!_controller.value.isInitialized) {
       return Container(
         height: 250,
         width: double.infinity,
         decoration: BoxDecoration(
-          color: Colors.black12,
+          color: cores.surfaceContainerHighest,
           borderRadius: BorderRadius.circular(14),
         ),
-        child: const Center(child: CircularProgressIndicator()),
+        child: const Center(
+          child: CircularProgressIndicator(),
+        ),
       );
     }
 
@@ -678,13 +667,13 @@ class _VideoPublicacaoState extends State<_VideoPublicacao> {
                     child: Container(
                       width: 58,
                       height: 58,
-                      decoration: const BoxDecoration(
-                        color: Color(0xFFC92768),
+                      decoration: BoxDecoration(
+                        color: cores.primary,
                         shape: BoxShape.circle,
                       ),
-                      child: const Icon(
+                      child: Icon(
                         Icons.play_arrow,
-                        color: Colors.white,
+                        color: cores.onPrimary,
                         size: 34,
                       ),
                     ),
