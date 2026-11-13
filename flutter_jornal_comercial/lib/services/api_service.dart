@@ -94,10 +94,12 @@ class ApiService {
     }
 
     if (data is Map && data['mensagem'] != null) {
+      print("ERRO RETORNADO PELA API: ${data['erro']}");
       throw Exception(data['mensagem']);
     }
 
     if (data is Map && data['erro'] != null) {
+      print("ERRO RETORNADO PELA API: ${data['erro']}");
       throw Exception(data['erro']);
     }
 

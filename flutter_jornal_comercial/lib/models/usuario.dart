@@ -22,12 +22,25 @@ class Usuario {
   });
 
   factory Usuario.fromJson(Map<String, dynamic> json) {
+    const String supabaseStorageUrl =
+        'https://hepwnbumziimvfugvjbe.supabase.co/storage/v1/object/public/midias/';
+
+    String? processarUrl(dynamic valor) {
+      if (valor == null ||
+          valor.toString().isEmpty ||
+          valor.toString() == 'default') {
+        return null;
+      }
+      final str = valor.toString();
+      return str.startsWith('http') ? str : '$supabaseStorageUrl$str';
+    }
+
     return Usuario(
       id: json['id'],
       nome: json['nome'] ?? '',
       email: json['email'] ?? '',
-      fotoPerfil: json['fotoPerfil'],
-      template: json['template'],
+      fotoPerfil: processarUrl(json['fotoPerfil']),
+      template: processarUrl(json['template']),
       bio: json['bio'],
       tipo: json['tipo'] ?? '',
       empresaId: json['empresaId'],

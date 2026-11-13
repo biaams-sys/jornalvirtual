@@ -1,17 +1,21 @@
-
 const multer = require("multer");
 
 const tiposPermitidos = [
     "image/jpeg",
+    "image/jpg",
     "image/png",
-    "image/webp"
+    "image/webp",
+    "image/heic",
+    "image/heif"
 ];
 
 const extensoesPermitidas = [
     "jpg",
     "jpeg",
     "png",
-    "webp"
+    "webp",
+    "heic",
+    "heif"
 ];
 
 const filtrarExtensao = (req, file, callback) => {
@@ -21,13 +25,13 @@ const filtrarExtensao = (req, file, callback) => {
         .toLowerCase();
 
     if (
-        tiposPermitidos.includes(file.mimetype) &&
-        extensoesPermitidas.includes(extensao)
+        tiposPermitidos.includes(file.mimetype) ||
+        extensaoPermitidas.includes(extensao)
     ) {
         callback(null, true);
     } else {
         callback(
-            new Error("Envie uma imagem JPG, JPEG, PNG ou WEBP.")
+            new Error("Formato de imagem inválido. Envie JPG, PNG, WEBP ou HEIC.")
         );
     }
 };
@@ -36,7 +40,7 @@ const uploadMidia = multer({
     storage: multer.memoryStorage(),
     fileFilter: filtrarExtensao,
     limits: {
-        fileSize: 10 * 1024 * 1024
+        fileSize: 10 * 1024 * 1024 // 10MB
     }
 }).single("arquivo");
 

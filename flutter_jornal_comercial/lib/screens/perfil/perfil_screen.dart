@@ -347,6 +347,10 @@ class _PerfilScreenState extends State<PerfilScreen> {
   String _montarUrlImagem(String? caminho) {
     if (caminho == null || caminho.isEmpty) return '';
 
+    if (caminho.contains('unsplash.com')) {
+      return '';
+    }
+
     if (caminho.startsWith('http://') || caminho.startsWith('https://')) {
       return caminho;
     }
