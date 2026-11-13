@@ -419,6 +419,10 @@ const fotoPerfil = async (req, res) => {
         const usuarioId = req.user.id;
         const arquivo = req.file;
 
+        if (!arquivo) {
+            return res.status(400).json({ mensagem: "Nenhum arquivo enviado." });
+        }
+
         const extensoes = {
             "image/jpeg": "jpg",
             "image/png": "png",
@@ -428,14 +432,13 @@ const fotoPerfil = async (req, res) => {
         const extensao = extensoes[arquivo.mimetype];
 
         if (!extensao) {
-            return res.status(400).json({
-                mensagem: "Formato de imagem não permitido."
-            });
+            return res.status(400).json({ mensagem: "Formato de imagem não permitido." });
         }
 
         const nomeArquivo = `${Date.now()}-${crypto.randomUUID()}.${extensao}`;
         const caminho = `perfil/${usuarioId}/${nomeArquivo}`;
 
+        // Envio direto para o bucket do Supabase usando o buffer (sem usar a pasta local 'fs')
         const { data, error } = await supabase.storage
             .from("midias")
             .upload(caminho, arquivo.buffer, {
@@ -449,17 +452,14 @@ const fotoPerfil = async (req, res) => {
             .from("midias")
             .getPublicUrl(data.path);
 
+        // Atualiza no banco via Prisma
         await prisma.usuarios.update({
-            where: {
-                id: usuarioId
-            },
-            data: {
-                fotoPerfil: data.path
-            }
+            where: { id: usuarioId },
+            data: { fotoPerfil: data.path }
         });
 
         return res.status(200).json({
-            mensagem: "Foto de perfil atualizada",
+            mensagem: "Foto de perfil atualizada com sucesso",
             caminho: data.path,
             publicUrl: urlData.publicUrl
         });
@@ -472,11 +472,14 @@ const fotoPerfil = async (req, res) => {
     }
 };
 
-
 const atualizarTemplate = async (req, res) => {
     try {
-        const usuarioId = req.user.id;
+        const usuarioId = Number(req.params.id);
         const arquivo = req.file;
+
+        if (!arquivo) {
+            return res.status(400).json({ mensagem: "Nenhum arquivo enviado." });
+        }
 
         const extensoes = {
             "image/jpeg": "jpg",
@@ -487,9 +490,7 @@ const atualizarTemplate = async (req, res) => {
         const extensao = extensoes[arquivo.mimetype];
 
         if (!extensao) {
-            return res.status(400).json({
-                mensagem: "Formato de imagem não permitido."
-            });
+            return res.status(400).json({ mensagem: "Formato de imagem não permitido." });
         }
 
         const nomeArquivo = `${Date.now()}-${crypto.randomUUID()}.${extensao}`;
@@ -509,12 +510,8 @@ const atualizarTemplate = async (req, res) => {
             .getPublicUrl(data.path);
 
         await prisma.usuarios.update({
-            where: {
-                id: usuarioId
-            },
-            data: {
-                template: data.path
-            }
+            where: { id: usuarioId },
+            data: { template: data.path }
         });
 
         return res.status(200).json({

@@ -1,6 +1,6 @@
 class ApiConstants {
   static const String baseUrl =
-      'https://jornalvirtual-djagchqt2-biaams-sys1.vercel.app';
+      'https://jornalvirtual-git-main-biaams-sys1.vercel.app';
 
   static const String supabaseUrl =
       'https://hepwnbumziimvfugvjbe.supabase.co/rest/v1';

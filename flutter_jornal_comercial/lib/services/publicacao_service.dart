@@ -162,6 +162,8 @@ class PublicacaoService {
   Future<List<dynamic>> listarRankingHashtags() async {
     final response = await _apiService.get('/hashtags/ranking');
 
+    print('RANKING DE HASHTAGS: $response');
+
     if (response is! List) {
       throw Exception('Formato do ranking de hashtags inválido.');
     }

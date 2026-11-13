@@ -723,6 +723,47 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   String? _getImagem(Noticia noticia) {
+    String? _getImagem(Noticia noticia) {
+      debugPrint('NOTÍCIA: ${noticia.id}');
+      debugPrint('MÍDIAS RECEBIDAS: ${noticia.midias}');
+
+      for (final midia in noticia.midias) {
+        if (midia is! Map) continue;
+
+        debugPrint('MIME TYPE: ${midia['mimeType']}');
+        debugPrint('PATH: ${midia['path']}');
+
+        final mimeType = midia['mimeType']?.toString() ?? '';
+
+        if (!mimeType.startsWith('image/')) continue;
+
+        final path = midia['path'];
+
+        if (path == null || path.toString().isEmpty) continue;
+
+        var caminho = path.toString();
+
+        if (caminho.startsWith('http://') || caminho.startsWith('https://')) {
+          debugPrint('URL FINAL: $caminho');
+          return caminho;
+        }
+
+        if (caminho.startsWith('midias/')) {
+          caminho = caminho.substring('midias/'.length);
+        }
+
+        final baseUrl = ApiConstants.supabaseUrl.replaceFirst('/rest/v1', '');
+
+        final url = '$baseUrl/storage/v1/object/public/midias/$caminho';
+
+        debugPrint('URL FINAL: $url');
+
+        return url;
+      }
+
+      return null;
+    }
+
     for (final midia in noticia.midias) {
       if (midia is! Map) continue;
 

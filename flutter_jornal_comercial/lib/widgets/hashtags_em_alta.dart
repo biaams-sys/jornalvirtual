@@ -28,8 +28,20 @@ class _HashtagsEmAltaState extends State<HashtagsEmAlta> {
     _hashtagsFuture = _carregarHashtags();
   }
 
-  Future<List<dynamic>> _carregarHashtags() {
-    return _service.listarRankingHashtags();
+  Future<List<dynamic>> _carregarHashtags() async {
+    print('CARREGANDO HASHTAGS...');
+
+    try {
+      final resultado = await _service.listarRankingHashtags();
+
+      print('HASHTAGS RECEBIDAS: $resultado');
+
+      return resultado;
+    } catch (e, stackTrace) {
+      print('ERRO AO CARREGAR HASHTAGS: $e');
+      print(stackTrace);
+      rethrow;
+    }
   }
 
   void atualizarRanking() {
