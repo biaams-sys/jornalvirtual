@@ -127,7 +127,8 @@ const cadastrar = async (req, res) => {
                 noticiaId: noticiaId,
                 path: data.path,
                 nomeOriginal: arquivo.originalname,
-                nomeArquivo: nomeArquivo
+                nomeArquivo: nomeArquivo,
+                mimeType: arquivo.mimeType
             }
         });
 
