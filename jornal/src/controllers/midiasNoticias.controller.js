@@ -183,7 +183,10 @@ const excluir = async (req, res) => {
                 .from("midias")
                 .remove([caminho]);
 
-            if (error) throw error;
+            if (error) {
+                console.error("Erro Supabase:", error);
+                throw error;
+            }
         }
 
         await prisma.midiasNoticias.delete({
