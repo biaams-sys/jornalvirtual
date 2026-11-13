@@ -40,7 +40,7 @@ const uploadMidia = multer({
     storage: multer.memoryStorage(),
     fileFilter: filtrarExtensao,
     limits: {
-        fileSize: 10 * 1024 * 1024 // 10MB
+        fileSize: 10 * 1024 * 1024
     }
 }).single("arquivo");
 
