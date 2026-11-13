@@ -128,7 +128,7 @@ const cadastrar = async (req, res) => {
                 path: data.path,
                 nomeOriginal: arquivo.originalname,
                 nomeArquivo: nomeArquivo,
-                mimeType: arquivo.mimeType
+                mimeType: arquivo.mimetype
             }
         });
 
