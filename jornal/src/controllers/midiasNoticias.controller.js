@@ -126,7 +126,8 @@ const cadastrar = async (req, res) => {
             data: {
                 noticiaId: noticiaId,
                 path: data.path,
-                nomeOriginal: arquivo.originalname
+                nomeOriginal: arquivo.originalname,
+                nomeArquivo: nomeArquivo
             }
         });
 
