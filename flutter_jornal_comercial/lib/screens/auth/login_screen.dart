@@ -46,7 +46,6 @@ class _LoginScreenState extends State<LoginScreen> {
         senha: senha,
       );
 
-      // Carrega o tema correspondente à empresa do usuário.
       await TemaService.carregarTema();
 
       if (!mounted) return;
@@ -81,10 +80,11 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final cores = Theme.of(context).colorScheme;
+    final tema = Theme.of(context);
+    final cores = tema.colorScheme;
 
     return Scaffold(
-      backgroundColor: cores.surface,
+      backgroundColor: tema.scaffoldBackgroundColor,
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
@@ -153,7 +153,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   Text(
                     'Entre na plataforma para acompanhar as notícias e publicações da sua empresa.',
                     style: TextStyle(
-                      color: cores.onSurface.withValues(alpha: 0.65),
+                      color: cores.onSurfaceVariant,
                       fontSize: 14,
                       height: 1.6,
                     ),
@@ -201,7 +201,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           _mostrarSenha
                               ? Icons.visibility_off_outlined
                               : Icons.visibility_outlined,
-                          color: cores.onSurface.withValues(alpha: 0.55),
+                          color: cores.onSurfaceVariant,
                           size: 20,
                         ),
                       ),
@@ -242,7 +242,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       onPressed: _carregando ? null : _login,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: cores.primary,
-                        foregroundColor: Colors.white,
+                        foregroundColor: cores.onPrimary,
                         disabledBackgroundColor:
                             cores.primary.withValues(alpha: 0.55),
                         elevation: 0,
@@ -251,11 +251,11 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                       ),
                       child: _carregando
-                          ? const SizedBox(
+                          ? SizedBox(
                               width: 21,
                               height: 21,
                               child: CircularProgressIndicator(
-                                color: Colors.white,
+                                color: cores.onPrimary,
                                 strokeWidth: 2,
                               ),
                             )
@@ -276,7 +276,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     child: Text(
                       'Informação que conecta.',
                       style: TextStyle(
-                        color: cores.onSurface.withValues(alpha: 0.55),
+                        color: cores.onSurfaceVariant,
                         fontSize: 12,
                         letterSpacing: 0.3,
                       ),
@@ -311,13 +311,13 @@ class _LoginScreenState extends State<LoginScreen> {
     return InputDecoration(
       hintText: hint,
       hintStyle: TextStyle(
-        color: cores.onSurface.withValues(alpha: 0.4),
+        color: cores.onSurfaceVariant.withValues(alpha: 0.8),
         fontSize: 14,
       ),
       prefixIcon: Icon(
         icon,
         size: 20,
-        color: cores.onSurface.withValues(alpha: 0.55),
+        color: cores.onSurfaceVariant,
       ),
       suffixIcon: suffix,
       filled: true,
@@ -329,13 +329,13 @@ class _LoginScreenState extends State<LoginScreen> {
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
         borderSide: BorderSide(
-          color: cores.outline.withValues(alpha: 0.5),
+          color: cores.outline,
         ),
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
         borderSide: BorderSide(
-          color: cores.outline.withValues(alpha: 0.5),
+          color: cores.outline,
         ),
       ),
       focusedBorder: OutlineInputBorder(

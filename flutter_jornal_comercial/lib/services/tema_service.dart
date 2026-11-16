@@ -50,43 +50,44 @@ class TemaService {
         return;
       }
 
-      // Aceita tanto o tema diretamente quanto uma resposta
-      // que contenha o tema dentro da propriedade "tema".
       final tema = dados['tema'] is Map ? dados['tema'] : dados;
 
       temaAtual.value = AppTheme.criar(
-        primary: _lerCor(tema['primary'], const Color(0xFFE52E67)),
+        primary: _lerCor(
+          tema['primary'],
+          const Color(0xFF315C63),
+        ),
         primaryDark: _lerCor(
           tema['primaryDark'],
-          const Color(0xFFD82B61),
+          const Color(0xFF264A50),
         ),
         secondary: _lerCor(
           tema['secondary'],
-          const Color(0xFF817980),
+          const Color(0xFF687276),
         ),
         background: _lerCor(
           tema['background'],
-          const Color(0xFFFFFBFC),
+          const Color(0xFFF3F5F4),
         ),
         surface: _lerCor(
           tema['surface'],
-          Colors.white,
+          const Color(0xFFFFFFFF),
         ),
         text: _lerCor(
           tema['text'],
-          const Color(0xFF242126),
+          const Color(0xFF273033),
         ),
         textLight: _lerCor(
           tema['textLight'],
-          const Color(0xFFAAA3A8),
+          const Color(0xFF687276),
         ),
         border: _lerCor(
           tema['border'],
-          const Color(0xFFEDE4E7),
+          const Color(0xFFD6DCDD),
         ),
         danger: _lerCor(
           tema['danger'],
-          const Color(0xFFD82B61),
+          const Color(0xFFB42318),
         ),
       );
     } catch (e) {
