@@ -539,7 +539,6 @@ const atualizarTemplate = async (req, res) => {
             caminho: data.path,
             publicUrl: urlData.publicUrl
         });
-
     } catch (erro) {
         return res.status(500).json({
             mensagem: "Erro ao atualizar template",

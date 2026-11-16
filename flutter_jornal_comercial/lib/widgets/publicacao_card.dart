@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
 
@@ -60,7 +59,8 @@ class _PublicacaoCardState extends State<PublicacaoCard> {
     super.initState();
 
     _quantidadeCurtidas = widget.publicacao.quantidadeCurtidas;
-    _curtida = widget.usuarioId != null &&
+    _curtida =
+        widget.usuarioId != null &&
         widget.publicacao.curtidaPorUsuario(widget.usuarioId!);
   }
 
@@ -70,7 +70,8 @@ class _PublicacaoCardState extends State<PublicacaoCard> {
 
     if (oldWidget.publicacao.id != widget.publicacao.id) {
       _quantidadeCurtidas = widget.publicacao.quantidadeCurtidas;
-      _curtida = widget.usuarioId != null &&
+      _curtida =
+          widget.usuarioId != null &&
           widget.publicacao.curtidaPorUsuario(widget.usuarioId!);
     }
   }
@@ -112,11 +113,9 @@ class _PublicacaoCardState extends State<PublicacaoCard> {
       return;
     }
 
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (_) => PerfilScreen(usuarioId: id),
-      ),
-    );
+    Navigator.of(
+      context,
+    ).push(MaterialPageRoute(builder: (_) => PerfilScreen(usuarioId: id)));
   }
 
   String _tipoAutor() {
@@ -141,8 +140,7 @@ class _PublicacaoCardState extends State<PublicacaoCard> {
 
     final fotoString = foto.toString();
 
-    if (fotoString.startsWith('http://') ||
-        fotoString.startsWith('https://')) {
+    if (fotoString.startsWith('http://') || fotoString.startsWith('https://')) {
       return fotoString;
     }
 
@@ -184,9 +182,7 @@ class _PublicacaoCardState extends State<PublicacaoCard> {
             ),
             TextButton(
               onPressed: () => Navigator.pop(context, true),
-              style: TextButton.styleFrom(
-                foregroundColor: cores.error,
-              ),
+              style: TextButton.styleFrom(foregroundColor: cores.error),
               child: const Text('Excluir'),
             ),
           ],
@@ -204,9 +200,7 @@ class _PublicacaoCardState extends State<PublicacaoCard> {
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Publicação excluída com sucesso.'),
-        ),
+        const SnackBar(content: Text('Publicação excluída com sucesso.')),
       );
 
       widget.atualizar?.call();
@@ -214,9 +208,7 @@ class _PublicacaoCardState extends State<PublicacaoCard> {
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(e.toString().replaceFirst('Exception: ', '')),
-        ),
+        SnackBar(content: Text(e.toString().replaceFirst('Exception: ', ''))),
       );
     } finally {
       if (mounted) {
@@ -258,9 +250,7 @@ class _PublicacaoCardState extends State<PublicacaoCard> {
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(e.toString().replaceFirst('Exception: ', '')),
-        ),
+        SnackBar(content: Text(e.toString().replaceFirst('Exception: ', ''))),
       );
     } finally {
       if (mounted) {
@@ -325,9 +315,7 @@ class _PublicacaoCardState extends State<PublicacaoCard> {
 
                       return const SizedBox(
                         height: 250,
-                        child: Center(
-                          child: CircularProgressIndicator(),
-                        ),
+                        child: Center(child: CircularProgressIndicator()),
                       );
                     },
                     errorBuilder: (context, error, stackTrace) {
@@ -351,9 +339,7 @@ class _PublicacaoCardState extends State<PublicacaoCard> {
                             const SizedBox(height: 8),
                             Text(
                               'Não foi possível carregar a imagem.',
-                              style: TextStyle(
-                                color: cores.onSurfaceVariant,
-                              ),
+                              style: TextStyle(color: cores.onSurfaceVariant),
                             ),
                           ],
                         ),
@@ -400,10 +386,7 @@ class _PublicacaoCardState extends State<PublicacaoCard> {
                   backgroundColor: cores.primaryContainer,
                   backgroundImage: foto != null ? NetworkImage(foto) : null,
                   child: foto == null
-                      ? Icon(
-                          Icons.person,
-                          color: cores.onPrimaryContainer,
-                        )
+                      ? Icon(Icons.person, color: cores.onPrimaryContainer)
                       : null,
                 ),
               ),
@@ -464,10 +447,7 @@ class _PublicacaoCardState extends State<PublicacaoCard> {
                             height: 22,
                             child: CircularProgressIndicator(strokeWidth: 2),
                           )
-                        : Icon(
-                            Icons.more_horiz,
-                            color: cores.onSurfaceVariant,
-                          ),
+                        : Icon(Icons.more_horiz, color: cores.onSurfaceVariant),
                   ),
                 ),
             ],
@@ -520,13 +500,17 @@ class _PublicacaoCardState extends State<PublicacaoCard> {
                       Icon(
                         _curtida ? Icons.favorite : Icons.favorite_border,
                         size: 21,
-                        color: _curtida ? Colors.redAccent : cores.onSurfaceVariant,
+                        color: _curtida
+                            ? Colors.redAccent
+                            : cores.onSurfaceVariant,
                       ),
                       const SizedBox(width: 6),
                       Text(
                         '$_quantidadeCurtidas',
                         style: TextStyle(
-                          color: _curtida ? Colors.redAccent : cores.onSurfaceVariant,
+                          color: _curtida
+                              ? Colors.redAccent
+                              : cores.onSurfaceVariant,
                           fontWeight: FontWeight.w500,
                         ),
                       ),
@@ -541,9 +525,8 @@ class _PublicacaoCardState extends State<PublicacaoCard> {
                     context: context,
                     isScrollControlled: true,
                     backgroundColor: Colors.transparent,
-                    builder: (_) => ComentariosModal(
-                      publicacao: widget.publicacao,
-                    ),
+                    builder: (_) =>
+                        ComentariosModal(publicacao: widget.publicacao),
                   );
 
                   if (!mounted) return;
@@ -595,9 +578,7 @@ class _VideoPublicacaoState extends State<_VideoPublicacao> {
   void initState() {
     super.initState();
 
-    _controller = VideoPlayerController.networkUrl(
-      Uri.parse(widget.url),
-    );
+    _controller = VideoPlayerController.networkUrl(Uri.parse(widget.url));
 
     _inicializarVideo();
   }
@@ -634,9 +615,7 @@ class _VideoPublicacaoState extends State<_VideoPublicacao> {
           color: cores.surfaceContainerHighest,
           borderRadius: BorderRadius.circular(14),
         ),
-        child: const Center(
-          child: CircularProgressIndicator(),
-        ),
+        child: const Center(child: CircularProgressIndicator()),
       );
     }
 
