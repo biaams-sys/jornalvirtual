@@ -1,20 +1,27 @@
+
 import 'package:flutter/material.dart';
 
 import '../../core/constants/api_constants.dart';
-import '../../core/theme/app_colors.dart';
 import '../../models/noticia.dart';
 import '../../services/historico_noticias_service.dart';
 
 class NoticiaDetalhesScreen extends StatefulWidget {
   final Noticia noticia;
 
-  const NoticiaDetalhesScreen({super.key, required this.noticia});
+  const NoticiaDetalhesScreen({
+    super.key,
+    required this.noticia,
+  });
 
   @override
-  State<NoticiaDetalhesScreen> createState() => _NoticiaDetalhesScreenState();
+  State<NoticiaDetalhesScreen> createState() =>
+      _NoticiaDetalhesScreenState();
 }
 
-class _NoticiaDetalhesScreenState extends State<NoticiaDetalhesScreen> {
+class _NoticiaDetalhesScreenState
+    extends State<NoticiaDetalhesScreen> {
+  ColorScheme get _cores => Theme.of(context).colorScheme;
+
   @override
   void initState() {
     super.initState();
@@ -35,15 +42,19 @@ class _NoticiaDetalhesScreenState extends State<NoticiaDetalhesScreen> {
 
       var caminho = path.toString();
 
-      if (caminho.startsWith('http://') || caminho.startsWith('https://')) {
+      if (caminho.startsWith('http://') ||
+          caminho.startsWith('https://')) {
         return caminho;
       }
+
+      caminho = caminho.replaceFirst(RegExp(r'^/+'), '');
 
       if (caminho.startsWith('midias/')) {
         caminho = caminho.substring('midias/'.length);
       }
 
-      final baseUrl = ApiConstants.supabaseUrl.replaceFirst('/rest/v1', '');
+      final baseUrl =
+          ApiConstants.supabaseUrl.replaceFirst('/rest/v1', '');
 
       return '$baseUrl/storage/v1/object/public/midias/$caminho';
     }
@@ -62,11 +73,11 @@ class _NoticiaDetalhesScreenState extends State<NoticiaDetalhesScreen> {
     final imagem = _getImagem();
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: SafeArea(
         child: Column(
           children: [
-            _buildHeader(context),
+            _buildHeader(),
             Expanded(
               child: SingleChildScrollView(
                 physics: const BouncingScrollPhysics(),
@@ -75,7 +86,12 @@ class _NoticiaDetalhesScreenState extends State<NoticiaDetalhesScreen> {
                   children: [
                     if (imagem != null) _buildImagem(imagem),
                     Padding(
-                      padding: const EdgeInsets.fromLTRB(20, 34, 20, 40),
+                      padding: const EdgeInsets.fromLTRB(
+                        20,
+                        30,
+                        20,
+                        40,
+                      ),
                       child: _buildConteudo(),
                     ),
                   ],
@@ -88,29 +104,27 @@ class _NoticiaDetalhesScreenState extends State<NoticiaDetalhesScreen> {
     );
   }
 
-  Widget _buildHeader(BuildContext context) {
+  Widget _buildHeader() {
     return Container(
       height: 58,
       width: double.infinity,
-      color: AppColors.primary,
+      color: _cores.primary,
       child: Row(
         children: [
           IconButton(
-            onPressed: () {
-              Navigator.pop(context);
-            },
+            onPressed: () => Navigator.pop(context),
             padding: const EdgeInsets.only(left: 15),
-            icon: const Icon(
+            icon: Icon(
               Icons.arrow_back_rounded,
-              color: Colors.white,
+              color: _cores.onPrimary,
               size: 27,
             ),
           ),
           const SizedBox(width: 5),
-          const Text(
+          Text(
             'Notícia',
             style: TextStyle(
-              color: Colors.white,
+              color: _cores.onPrimary,
               fontSize: 20,
               fontWeight: FontWeight.w700,
             ),
@@ -134,14 +148,11 @@ class _NoticiaDetalhesScreenState extends State<NoticiaDetalhesScreen> {
             return Container(
               width: double.infinity,
               height: 225,
-              decoration: BoxDecoration(
-                color: AppColors.primaryLight,
-                borderRadius: BorderRadius.circular(18),
-              ),
-              child: const Center(
+              color: _cores.primaryContainer,
+              child: Center(
                 child: Icon(
                   Icons.image_not_supported_outlined,
-                  color: AppColors.primary,
+                  color: _cores.onPrimaryContainer,
                   size: 40,
                 ),
               ),
@@ -162,58 +173,65 @@ class _NoticiaDetalhesScreenState extends State<NoticiaDetalhesScreen> {
           width: 86,
           height: 4,
           decoration: BoxDecoration(
-            color: AppColors.primary,
+            color: _cores.primary,
             borderRadius: BorderRadius.circular(4),
           ),
         ),
+
         const SizedBox(height: 18),
+
         Text(
           widget.noticia.titulo,
-          style: const TextStyle(
-            color: AppColors.text,
+          style: TextStyle(
+            color: _cores.onSurface,
             fontSize: 30,
             height: 1.1,
             fontWeight: FontWeight.w800,
             letterSpacing: -0.8,
           ),
         ),
+
         if (widget.noticia.subtitulo?.isNotEmpty == true) ...[
           const SizedBox(height: 14),
           Text(
             widget.noticia.subtitulo!,
-            style: const TextStyle(
-              color: AppColors.textSecondary,
+            style: TextStyle(
+              color: _cores.onSurfaceVariant,
               fontSize: 17,
               height: 1.45,
               fontWeight: FontWeight.w400,
             ),
           ),
         ],
+
         const SizedBox(height: 24),
+
         Container(
           padding: const EdgeInsets.symmetric(vertical: 15),
-          decoration: const BoxDecoration(
+          decoration: BoxDecoration(
             border: Border(
-              top: BorderSide(color: AppColors.border),
-              bottom: BorderSide(color: AppColors.border),
+              top: BorderSide(color: _cores.outlineVariant),
+              bottom: BorderSide(color: _cores.outlineVariant),
             ),
           ),
           child: Row(
             children: [
               Container(
-                width: 38,
-                height: 38,
-                decoration: const BoxDecoration(
-                  color: AppColors.primaryLight,
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: _cores.primaryContainer,
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(
+                child: Icon(
                   Icons.person_rounded,
-                  color: AppColors.primary,
-                  size: 20,
+                  color: _cores.onPrimaryContainer,
+                  size: 21,
                 ),
               ),
-              const SizedBox(width: 10),
+
+              const SizedBox(width: 11),
+
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -222,38 +240,41 @@ class _NoticiaDetalhesScreenState extends State<NoticiaDetalhesScreen> {
                       autor?.isNotEmpty == true ? autor! : 'Autor',
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        color: AppColors.text,
+                      style: TextStyle(
+                        color: _cores.onSurface,
                         fontSize: 13,
                         fontWeight: FontWeight.w700,
                       ),
                     ),
-                    const SizedBox(height: 2),
-                    const Text(
+                    const SizedBox(height: 3),
+                    Text(
                       'Publicado em',
                       style: TextStyle(
-                        color: AppColors.textSecondary,
+                        color: _cores.onSurfaceVariant,
                         fontSize: 11,
                       ),
                     ),
                   ],
                 ),
               ),
+
               Text(
                 _formatarData(widget.noticia.dataPublicacao),
-                style: const TextStyle(
-                  color: AppColors.textSecondary,
+                style: TextStyle(
+                  color: _cores.onSurfaceVariant,
                   fontSize: 12,
                 ),
               ),
             ],
           ),
         ),
+
         const SizedBox(height: 28),
+
         Text(
           widget.noticia.texto,
-          style: const TextStyle(
-            color: AppColors.text,
+          style: TextStyle(
+            color: _cores.onSurface,
             fontSize: 16,
             height: 1.8,
             fontWeight: FontWeight.w400,

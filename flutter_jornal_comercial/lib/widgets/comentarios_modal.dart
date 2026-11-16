@@ -29,6 +29,8 @@ class _ComentariosModalState extends State<ComentariosModal> {
   int? _comentarioRespondendo;
   int? _excluindoComentarioId;
 
+  ColorScheme get _cores => Theme.of(context).colorScheme;
+
   @override
   void initState() {
     super.initState();
@@ -70,6 +72,7 @@ class _ComentariosModalState extends State<ComentariosModal> {
           content: Text(
             e.toString().replaceFirst('Exception: ', ''),
           ),
+          backgroundColor: _cores.error,
         ),
       );
     }
@@ -108,6 +111,7 @@ class _ComentariosModalState extends State<ComentariosModal> {
           content: Text(
             e.toString().replaceFirst('Exception: ', ''),
           ),
+          backgroundColor: _cores.error,
         ),
       );
     } finally {
@@ -154,14 +158,12 @@ class _ComentariosModalState extends State<ComentariosModal> {
   int? _obterAutorId(dynamic item) {
     if (item is! Map) return null;
 
-    // Algumas respostas da API podem trazer usuarioId diretamente.
     final usuarioId = item['usuarioId'];
 
     if (usuarioId != null) {
       return int.tryParse(usuarioId.toString());
     }
 
-    // Outras podem trazer o ID dentro do objeto autor.
     final autor = item['autor'];
 
     if (autor is Map && autor['id'] != null) {
@@ -188,25 +190,37 @@ class _ComentariosModalState extends State<ComentariosModal> {
 
     final confirmar = await showDialog<bool>(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Excluir comentário'),
-        content: const Text(
-          'Tem certeza de que deseja excluir este comentário?',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancelar'),
+      builder: (context) {
+        final cores = Theme.of(context).colorScheme;
+
+        return AlertDialog(
+          backgroundColor: cores.surface,
+          title: Text(
+            'Excluir comentário',
+            style: TextStyle(color: cores.onSurface),
           ),
-          TextButton(
-            onPressed: () => Navigator.pop(context, true),
-            style: TextButton.styleFrom(
-              foregroundColor: Colors.red,
+          content: Text(
+            'Tem certeza de que deseja excluir este comentário?',
+            style: TextStyle(color: cores.onSurfaceVariant),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: Text(
+                'Cancelar',
+                style: TextStyle(color: cores.primary),
+              ),
             ),
-            child: const Text('Excluir'),
-          ),
-        ],
-      ),
+            TextButton(
+              onPressed: () => Navigator.pop(context, true),
+              style: TextButton.styleFrom(
+                foregroundColor: cores.error,
+              ),
+              child: const Text('Excluir'),
+            ),
+          ],
+        );
+      },
     );
 
     if (confirmar != true || !mounted) return;
@@ -221,8 +235,9 @@ class _ComentariosModalState extends State<ComentariosModal> {
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Comentário excluído com sucesso.'),
+        SnackBar(
+          content: const Text('Comentário excluído com sucesso.'),
+          backgroundColor: _cores.primary,
         ),
       );
 
@@ -241,6 +256,7 @@ class _ComentariosModalState extends State<ComentariosModal> {
           content: Text(
             e.toString().replaceFirst('Exception: ', ''),
           ),
+          backgroundColor: _cores.error,
         ),
       );
     } finally {
@@ -261,13 +277,14 @@ class _ComentariosModalState extends State<ComentariosModal> {
     final excluindo = id != null && id == _excluindoComentarioId;
 
     if (excluindo) {
-      return const Padding(
-        padding: EdgeInsets.all(10),
+      return Padding(
+        padding: const EdgeInsets.all(10),
         child: SizedBox(
           width: 18,
           height: 18,
           child: CircularProgressIndicator(
             strokeWidth: 2,
+            color: _cores.primary,
           ),
         ),
       );
@@ -282,30 +299,42 @@ class _ComentariosModalState extends State<ComentariosModal> {
         }
       },
       itemBuilder: (context) => [
-        const PopupMenuItem<String>(
+        PopupMenuItem<String>(
           value: 'excluir',
           child: Row(
             children: [
               Icon(
                 Icons.delete_outline,
-                color: Colors.red,
+                color: _cores.error,
               ),
-              SizedBox(width: 8),
+              const SizedBox(width: 8),
               Text(
                 'Excluir comentário',
-                style: TextStyle(color: Colors.red),
+                style: TextStyle(color: _cores.error),
               ),
             ],
           ),
         ),
       ],
-      child: const Padding(
-        padding: EdgeInsets.all(8),
+      child: Padding(
+        padding: const EdgeInsets.all(8),
         child: Icon(
           Icons.more_vert,
           size: 20,
-          color: Colors.grey,
+          color: _cores.onSurfaceVariant,
         ),
+      ),
+    );
+  }
+
+  Widget _avatar({double raio = 18, double tamanhoIcone = 19}) {
+    return CircleAvatar(
+      radius: raio,
+      backgroundColor: _cores.primaryContainer,
+      child: Icon(
+        Icons.person,
+        size: tamanhoIcone,
+        color: _cores.onPrimaryContainer,
       ),
     );
   }
@@ -327,21 +356,13 @@ class _ComentariosModalState extends State<ComentariosModal> {
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const CircleAvatar(
-                radius: 18,
-                backgroundColor: Color(0xFFF4D5E2),
-                child: Icon(
-                  Icons.person,
-                  size: 19,
-                  color: Color(0xFFC92768),
-                ),
-              ),
+              _avatar(),
               const SizedBox(width: 10),
               Expanded(
                 child: Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFF9F5F7),
+                    color: _cores.surfaceContainerHighest,
                     borderRadius: BorderRadius.circular(13),
                   ),
                   child: Column(
@@ -349,14 +370,18 @@ class _ComentariosModalState extends State<ComentariosModal> {
                     children: [
                       Text(
                         _nome(comentario),
-                        style: const TextStyle(
+                        style: TextStyle(
+                          color: _cores.onSurface,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
                       const SizedBox(height: 5),
                       Text(
                         _texto(comentario),
-                        style: const TextStyle(height: 1.4),
+                        style: TextStyle(
+                          color: _cores.onSurfaceVariant,
+                          height: 1.4,
+                        ),
                       ),
                     ],
                   ),
@@ -380,12 +405,10 @@ class _ComentariosModalState extends State<ComentariosModal> {
                   });
                 }
               },
-              child: const Text(
-                'Responder',
-                style: TextStyle(
-                  color: Color(0xFFC92768),
-                ),
+              style: TextButton.styleFrom(
+                foregroundColor: _cores.primary,
               ),
+              child: const Text('Responder'),
             ),
           ),
           if (respostas.isNotEmpty)
@@ -397,20 +420,18 @@ class _ComentariosModalState extends State<ComentariosModal> {
                     margin: const EdgeInsets.only(bottom: 10),
                     padding: const EdgeInsets.all(10),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFFBF8F9),
+                      color: _cores.surfaceContainerLow,
                       borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: _cores.outlineVariant,
+                      ),
                     ),
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const CircleAvatar(
-                          radius: 15,
-                          backgroundColor: Color(0xFFF4D5E2),
-                          child: Icon(
-                            Icons.person,
-                            size: 16,
-                            color: Color(0xFFC92768),
-                          ),
+                        _avatar(
+                          raio: 15,
+                          tamanhoIcone: 16,
                         ),
                         const SizedBox(width: 8),
                         Expanded(
@@ -419,13 +440,19 @@ class _ComentariosModalState extends State<ComentariosModal> {
                             children: [
                               Text(
                                 _nomeResposta(resposta),
-                                style: const TextStyle(
+                                style: TextStyle(
+                                  color: _cores.onSurface,
                                   fontWeight: FontWeight.bold,
                                   fontSize: 13,
                                 ),
                               ),
                               const SizedBox(height: 3),
-                              Text(_texto(resposta)),
+                              Text(
+                                _texto(resposta),
+                                style: TextStyle(
+                                  color: _cores.onSurfaceVariant,
+                                ),
+                              ),
                             ],
                           ),
                         ),
@@ -449,15 +476,17 @@ class _ComentariosModalState extends State<ComentariosModal> {
 
   @override
   Widget build(BuildContext context) {
+    final tema = Theme.of(context);
+
     return DraggableScrollableSheet(
       initialChildSize: 0.75,
       minChildSize: 0.45,
       maxChildSize: 0.95,
       builder: (context, scrollController) {
         return Container(
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.vertical(
+          decoration: BoxDecoration(
+            color: _cores.surface,
+            borderRadius: const BorderRadius.vertical(
               top: Radius.circular(24),
             ),
           ),
@@ -468,7 +497,7 @@ class _ComentariosModalState extends State<ComentariosModal> {
                 width: 40,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: Colors.grey.shade300,
+                  color: _cores.outlineVariant,
                   borderRadius: BorderRadius.circular(10),
                 ),
               ),
@@ -476,32 +505,39 @@ class _ComentariosModalState extends State<ComentariosModal> {
                 padding: const EdgeInsets.all(20),
                 child: Row(
                   children: [
-                    const Expanded(
+                    Expanded(
                       child: Text(
                         'Comentários',
-                        style: TextStyle(
-                          fontSize: 21,
+                        style: tema.textTheme.titleLarge?.copyWith(
+                          color: _cores.onSurface,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
                     ),
                     IconButton(
                       onPressed: () => Navigator.pop(context),
-                      icon: const Icon(Icons.close),
+                      icon: Icon(
+                        Icons.close,
+                        color: _cores.onSurfaceVariant,
+                      ),
                     ),
                   ],
                 ),
               ),
               Expanded(
                 child: _carregando
-                    ? const Center(
-                        child: CircularProgressIndicator(),
+                    ? Center(
+                        child: CircularProgressIndicator(
+                          color: _cores.primary,
+                        ),
                       )
                     : _comentarios.isEmpty
-                        ? const Center(
+                        ? Center(
                             child: Text(
                               'Ainda não há comentários.',
-                              style: TextStyle(color: Colors.grey),
+                              style: TextStyle(
+                                color: _cores.onSurfaceVariant,
+                              ),
                             ),
                           )
                         : ListView.builder(
@@ -524,14 +560,14 @@ class _ComentariosModalState extends State<ComentariosModal> {
                     horizontal: 20,
                     vertical: 7,
                   ),
-                  color: const Color(0xFFF9F5F7),
+                  color: _cores.primaryContainer,
                   child: Row(
                     children: [
-                      const Expanded(
+                      Expanded(
                         child: Text(
                           'Respondendo a um comentário',
                           style: TextStyle(
-                            color: Color(0xFFC92768),
+                            color: _cores.onPrimaryContainer,
                             fontSize: 12,
                           ),
                         ),
@@ -542,6 +578,9 @@ class _ComentariosModalState extends State<ComentariosModal> {
                             _comentarioRespondendo = null;
                           });
                         },
+                        style: TextButton.styleFrom(
+                          foregroundColor: _cores.primary,
+                        ),
                         child: const Text('Cancelar'),
                       ),
                     ],
@@ -557,10 +596,34 @@ class _ComentariosModalState extends State<ComentariosModal> {
                           controller: _controller,
                           minLines: 1,
                           maxLines: 3,
+                          style: TextStyle(
+                            color: _cores.onSurface,
+                          ),
                           decoration: InputDecoration(
                             hintText: 'Escreva um comentário...',
+                            hintStyle: TextStyle(
+                              color: _cores.onSurfaceVariant,
+                            ),
+                            filled: true,
+                            fillColor: _cores.surfaceContainerHighest,
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(22),
+                              borderSide: BorderSide(
+                                color: _cores.outline,
+                              ),
+                            ),
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(22),
+                              borderSide: BorderSide(
+                                color: _cores.outline,
+                              ),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(22),
+                              borderSide: BorderSide(
+                                color: _cores.primary,
+                                width: 1.5,
+                              ),
                             ),
                             contentPadding: const EdgeInsets.symmetric(
                               horizontal: 16,
@@ -573,16 +636,17 @@ class _ComentariosModalState extends State<ComentariosModal> {
                       IconButton(
                         onPressed: _enviando ? null : _enviarComentario,
                         icon: _enviando
-                            ? const SizedBox(
+                            ? SizedBox(
                                 width: 20,
                                 height: 20,
                                 child: CircularProgressIndicator(
                                   strokeWidth: 2,
+                                  color: _cores.primary,
                                 ),
                               )
-                            : const Icon(
+                            : Icon(
                                 Icons.send,
-                                color: Color(0xFFC92768),
+                                color: _cores.primary,
                               ),
                       ),
                     ],

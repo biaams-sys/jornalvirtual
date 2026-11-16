@@ -18,26 +18,32 @@ class ConfigScreen extends StatefulWidget {
 
 class _ConfigScreenState extends State<ConfigScreen> {
   final AuthService _authService = AuthService();
+
   final HistoricoNoticiasService _historicoService =
       HistoricoNoticiasService();
 
   bool _notificacoesAtivas = false;
   String? _email;
+
   List<Noticia> _historico = [];
+
   bool _carregando = true;
 
   ColorScheme get _cores => Theme.of(context).colorScheme;
+
   Color get _fundo => Theme.of(context).scaffoldBackgroundColor;
 
   @override
   void initState() {
     super.initState();
+
     _carregarDados();
     _carregarPreferenciaNotificacoes();
   }
 
   Future<void> _carregarPreferenciaNotificacoes() async {
-    final ativo = await NotificacaoService.notificacoesEstaoAtivas();
+    final ativo =
+        await NotificacaoService.notificacoesEstaoAtivas();
 
     if (!mounted) return;
 
@@ -47,16 +53,32 @@ class _ConfigScreenState extends State<ConfigScreen> {
   }
 
   Future<void> _carregarDados() async {
-    final email = await _authService.getEmail();
-    final historico = await _historicoService.listar();
+    try {
+      final email = await _authService.getEmail();
+      final historico = await _historicoService.listar();
 
-    if (!mounted) return;
+      if (!mounted) return;
 
-    setState(() {
-      _email = email;
-      _historico = historico;
-      _carregando = false;
-    });
+      setState(() {
+        _email = email;
+        _historico = historico;
+        _carregando = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+
+      setState(() {
+        _carregando = false;
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Não foi possível carregar os dados: $e',
+          ),
+        ),
+      );
+    }
   }
 
   Future<void> _sair() async {
@@ -80,34 +102,41 @@ class _ConfigScreenState extends State<ConfigScreen> {
   }
 
   String? _getImagem(Noticia noticia) {
-    if (noticia.midias.isEmpty) {
-      return null;
+    for (final midia in noticia.midias) {
+      if (midia is! Map) continue;
+
+      final mimeType =
+          midia['mimeType']?.toString().toLowerCase() ?? '';
+
+      if (mimeType.isNotEmpty &&
+          !mimeType.startsWith('image/')) {
+        continue;
+      }
+
+      var caminho = midia['path']?.toString() ?? '';
+
+      if (caminho.isEmpty) continue;
+
+      if (caminho.startsWith('http://') ||
+          caminho.startsWith('https://')) {
+        return caminho;
+      }
+
+      if (caminho.startsWith('midias/')) {
+        caminho = caminho.substring('midias/'.length);
+      }
+
+      while (caminho.startsWith('/')) {
+        caminho = caminho.substring(1);
+      }
+
+      final baseUrl =
+          ApiConstants.supabaseUrl.replaceFirst('/rest/v1', '');
+
+      return '$baseUrl/storage/v1/object/public/midias/$caminho';
     }
 
-    final primeiraMidia = noticia.midias.first;
-
-    if (primeiraMidia is! Map) {
-      return null;
-    }
-
-    final path = primeiraMidia['path'];
-
-    if (path == null || path.toString().isEmpty) {
-      return null;
-    }
-
-    final caminho = path.toString();
-
-    if (caminho.startsWith('http://') ||
-        caminho.startsWith('https://')) {
-      return caminho;
-    }
-
-    final caminhoLimpo = caminho.startsWith('/')
-        ? caminho.substring(1)
-        : caminho;
-
-    return '${ApiConstants.baseUrl}/$caminhoLimpo';
+    return null;
   }
 
   @override
@@ -138,14 +167,21 @@ class _ConfigScreenState extends State<ConfigScreen> {
                         children: [
                           _buildSectionTitle('Minha conta'),
                           const SizedBox(height: 16),
+
                           _buildConta(),
+
                           const SizedBox(height: 30),
+
                           _buildSectionTitle('Preferências'),
                           const SizedBox(height: 16),
+
                           _buildPreferencias(),
+
                           const SizedBox(height: 34),
+
                           _buildSectionTitle('Histórico'),
                           const SizedBox(height: 5),
+
                           Text(
                             'Últimas notícias que você visualizou',
                             style: TextStyle(
@@ -153,9 +189,13 @@ class _ConfigScreenState extends State<ConfigScreen> {
                               fontSize: 13,
                             ),
                           ),
+
                           const SizedBox(height: 16),
+
                           _buildHistorico(),
+
                           const SizedBox(height: 36),
+
                           _buildBotaoSair(),
                         ],
                       ),
@@ -271,11 +311,13 @@ class _ConfigScreenState extends State<ConfigScreen> {
       ),
       child: SwitchListTile(
         contentPadding: const EdgeInsets.symmetric(vertical: 8),
+
         secondary: Icon(
           Icons.notifications_none_rounded,
           color: _cores.primary,
-          size: 21,
+          size: 23,
         ),
+
         title: Text(
           'Notificações',
           style: TextStyle(
@@ -284,6 +326,7 @@ class _ConfigScreenState extends State<ConfigScreen> {
             fontWeight: FontWeight.w600,
           ),
         ),
+
         subtitle: Text(
           _notificacoesAtivas
               ? 'Receber avisos sobre novas notícias'
@@ -293,9 +336,43 @@ class _ConfigScreenState extends State<ConfigScreen> {
             fontSize: 11,
           ),
         ),
-        activeTrackColor: _cores.primary,
+
         value: _notificacoesAtivas,
         onChanged: _alterarNotificacoes,
+
+        // Cor da bolinha do botão.
+        thumbColor: WidgetStateProperty.resolveWith<Color>(
+          (states) {
+            if (states.contains(WidgetState.selected)) {
+              return _cores.onPrimary;
+            }
+
+            return _cores.onSurfaceVariant;
+          },
+        ),
+
+        // Cor da barra do botão.
+        trackColor: WidgetStateProperty.resolveWith<Color>(
+          (states) {
+            if (states.contains(WidgetState.selected)) {
+              return _cores.primary;
+            }
+
+            return _cores.surfaceContainerHighest;
+          },
+        ),
+
+        // Contorno da barra.
+        trackOutlineColor:
+            WidgetStateProperty.resolveWith<Color>(
+          (states) {
+            if (states.contains(WidgetState.selected)) {
+              return _cores.primary;
+            }
+
+            return _cores.outline;
+          },
+        ),
       ),
     );
   }
@@ -393,7 +470,7 @@ class _ConfigScreenState extends State<ConfigScreen> {
           children: [
             Icon(
               Icons.history_rounded,
-              color: _cores.secondary,
+              color: _cores.primary,
               size: 30,
             ),
             const SizedBox(height: 10),
@@ -425,6 +502,8 @@ class _ConfigScreenState extends State<ConfigScreen> {
 
     return Material(
       color: _cores.surface,
+      borderRadius: BorderRadius.circular(12),
+      clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: () {
           Navigator.push(
@@ -437,37 +516,34 @@ class _ConfigScreenState extends State<ConfigScreen> {
           );
         },
         child: Container(
-          padding: const EdgeInsets.symmetric(
-            vertical: 12,
-            horizontal: 2,
-          ),
+          width: double.infinity,
+          padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            border: Border(
-              bottom: BorderSide(color: _cores.outline),
+            border: Border.all(
+              color: _cores.outline,
             ),
+            borderRadius: BorderRadius.circular(12),
           ),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              if (imagem != null) ...[
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(8),
-                  child: Image.network(
-                    imagem,
-                    width: 82,
-                    height: 68,
-                    fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) {
-                      return Container(
+              ClipRRect(
+                borderRadius: BorderRadius.circular(8),
+                child: imagem != null
+                    ? Image.network(
+                        imagem,
                         width: 82,
                         height: 68,
-                        color: _cores.primary.withValues(alpha: 0.08),
-                      );
-                    },
-                  ),
-                ),
-                const SizedBox(width: 13),
-              ],
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) {
+                          return _imagemHistoricoVazia();
+                        },
+                      )
+                    : _imagemHistoricoVazia(),
+              ),
+
+              const SizedBox(width: 13),
+
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -494,15 +570,30 @@ class _ConfigScreenState extends State<ConfigScreen> {
                   ],
                 ),
               ),
+
               const SizedBox(width: 8),
+
               Icon(
                 Icons.chevron_right_rounded,
-                color: _cores.secondary,
-                size: 21,
+                color: _cores.primary,
+                size: 23,
               ),
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _imagemHistoricoVazia() {
+    return Container(
+      width: 82,
+      height: 68,
+      color: _cores.primaryContainer,
+      child: Icon(
+        Icons.image_outlined,
+        color: _cores.onPrimaryContainer,
+        size: 27,
       ),
     );
   }
