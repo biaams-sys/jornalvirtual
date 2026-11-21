@@ -1,5 +1,7 @@
+
 import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
+
 import '../models/publicacao.dart';
 import 'api_service.dart';
 
@@ -47,16 +49,69 @@ class PublicacaoService {
     return int.parse(publicacao['id'].toString());
   }
 
-  Future<void> adicionarMidia(int publicacaoId, XFile arquivo) async {
-    final mimeType = arquivo.mimeType;
+  // Identifica somente formatos aceitos pelo backend.
+  String? _identificarMimeType(XFile arquivo) {
+    const formatosPermitidos = {
+      'image/jpeg',
+      'image/png',
+      'image/webp',
+      'video/mp4',
+      'video/webm',
+      'video/x-matroska',
+    };
 
-    if (mimeType == null || mimeType.isEmpty) {
-      throw Exception('Não foi possível identificar o formato do arquivo.');
+    final mimeType = arquivo.mimeType?.toLowerCase().trim();
+
+    if (mimeType != null && formatosPermitidos.contains(mimeType)) {
+      return mimeType;
     }
 
+    final nome = arquivo.name.toLowerCase();
+
+    if (nome.endsWith('.jpg') || nome.endsWith('.jpeg')) {
+      return 'image/jpeg';
+    }
+
+    if (nome.endsWith('.png')) {
+      return 'image/png';
+    }
+
+    if (nome.endsWith('.webp')) {
+      return 'image/webp';
+    }
+
+    if (nome.endsWith('.mp4')) {
+      return 'video/mp4';
+    }
+
+    if (nome.endsWith('.webm')) {
+      return 'video/webm';
+    }
+
+    if (nome.endsWith('.mkv')) {
+      return 'video/x-matroska';
+    }
+
+    return null;
+  }
+
+  Future<void> adicionarMidia(int publicacaoId, XFile arquivo) async {
+    final mimeType = _identificarMimeType(arquivo);
+
+    if (mimeType == null) {
+      throw Exception(
+        'Formato de arquivo não identificado ou não permitido. '
+        'Utilize JPG, PNG, WEBP, MP4, WEBM ou MKV.',
+      );
+    }
+
+    // Solicita autorização para enviar o arquivo ao Supabase.
     final autorizacao = await _apiService.post(
       '/midias-publicacoes/autorizar-upload/$publicacaoId',
-      body: {'nomeOriginal': arquivo.name, 'mimeType': mimeType},
+      body: {
+        'nomeOriginal': arquivo.name,
+        'mimeType': mimeType,
+      },
     );
 
     if (autorizacao is! Map) {
@@ -73,6 +128,7 @@ class PublicacaoService {
 
     final bytes = await arquivo.readAsBytes();
 
+    // Envia o arquivo diretamente para o Supabase Storage.
     final respostaUpload = await http.put(
       Uri.parse(signedUrl.toString()),
       headers: {
@@ -83,13 +139,17 @@ class PublicacaoService {
       body: bytes,
     );
 
-    if (respostaUpload.statusCode != 200 && respostaUpload.statusCode != 201) {
+    if (respostaUpload.statusCode != 200 &&
+        respostaUpload.statusCode != 201 &&
+        respostaUpload.statusCode != 204) {
       throw Exception(
-        'Erro ao enviar mídia: ${respostaUpload.statusCode} - ${respostaUpload.body}',
+        'Erro ao enviar mídia: ${respostaUpload.statusCode} - '
+        '${respostaUpload.body}',
       );
     }
 
-    await _apiService.post(
+    // Confirma o envio e registra a mídia no banco.
+    final confirmacao = await _apiService.post(
       '/midias-publicacoes/confirmar-upload/$publicacaoId',
       body: {
         'path': path,
@@ -98,6 +158,10 @@ class PublicacaoService {
         'mimeType': autorizacao['mimeType'],
       },
     );
+
+    if (confirmacao is! Map) {
+      throw Exception('Não foi possível confirmar o cadastro da mídia.');
+    }
   }
 
   Future<List<dynamic>> listarMidias(int publicacaoId) async {
