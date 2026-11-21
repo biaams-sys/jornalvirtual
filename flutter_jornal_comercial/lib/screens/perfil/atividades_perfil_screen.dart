@@ -1,3 +1,4 @@
+
 import 'package:flutter/material.dart';
 
 import '../../models/noticia.dart';
@@ -19,7 +20,8 @@ class AtividadesPerfilScreen extends StatefulWidget {
   });
 
   @override
-  State<AtividadesPerfilScreen> createState() => _AtividadesPerfilScreenState();
+  State<AtividadesPerfilScreen> createState() =>
+      _AtividadesPerfilScreenState();
 }
 
 class _AtividadesPerfilScreenState extends State<AtividadesPerfilScreen> {
@@ -31,6 +33,9 @@ class _AtividadesPerfilScreenState extends State<AtividadesPerfilScreen> {
 
   List<Noticia> _noticias = [];
   List<Publicacao> _publicacoes = [];
+
+  ColorScheme get _cores => Theme.of(context).colorScheme;
+  Color get _fundo => Theme.of(context).scaffoldBackgroundColor;
 
   String get _titulo {
     switch (widget.tipo) {
@@ -123,9 +128,9 @@ class _AtividadesPerfilScreenState extends State<AtividadesPerfilScreen> {
       margin: const EdgeInsets.only(bottom: 14),
       padding: const EdgeInsets.all(17),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: _cores.surface,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: const Color(0xFFF0DCE4)),
+        border: Border.all(color: _cores.outlineVariant),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.035),
@@ -139,18 +144,18 @@ class _AtividadesPerfilScreenState extends State<AtividadesPerfilScreen> {
         children: [
           Row(
             children: [
-              const Icon(
+              Icon(
                 Icons.newspaper_outlined,
-                color: Color(0xFFC92768),
+                color: _cores.primary,
                 size: 20,
               ),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
                   _formatarData(noticia.dataPublicacao),
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 12,
-                    color: Color(0xFF817980),
+                    color: _cores.onSurfaceVariant,
                   ),
                 ),
               ),
@@ -159,20 +164,20 @@ class _AtividadesPerfilScreenState extends State<AtividadesPerfilScreen> {
           const SizedBox(height: 12),
           Text(
             noticia.titulo,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 17,
               fontWeight: FontWeight.w800,
-              color: Color(0xFF18213D),
+              color: _cores.onSurface,
             ),
           ),
           if ((noticia.subtitulo ?? '').isNotEmpty) ...[
             const SizedBox(height: 5),
             Text(
               noticia.subtitulo!,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w600,
-                color: Color(0xFF817980),
+                color: _cores.secondary,
               ),
             ),
           ],
@@ -181,10 +186,10 @@ class _AtividadesPerfilScreenState extends State<AtividadesPerfilScreen> {
             noticia.texto,
             maxLines: 5,
             overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 14,
               height: 1.5,
-              color: Color(0xFF39343A),
+              color: _cores.onSurface,
             ),
           ),
         ],
@@ -213,12 +218,15 @@ class _AtividadesPerfilScreenState extends State<AtividadesPerfilScreen> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(_icone, size: 52, color: const Color(0xFFE7A4BC)),
+            Icon(_icone, size: 52, color: _cores.primary),
             const SizedBox(height: 14),
             Text(
               mensagem,
               textAlign: TextAlign.center,
-              style: const TextStyle(fontSize: 15, color: Color(0xFF817980)),
+              style: TextStyle(
+                fontSize: 15,
+                color: _cores.onSurfaceVariant,
+              ),
             ),
           ],
         ),
@@ -228,8 +236,8 @@ class _AtividadesPerfilScreenState extends State<AtividadesPerfilScreen> {
 
   Widget _conteudo() {
     if (_carregando) {
-      return const Center(
-        child: CircularProgressIndicator(color: Color(0xFFEF3F7A)),
+      return Center(
+        child: CircularProgressIndicator(color: _cores.primary),
       );
     }
 
@@ -240,13 +248,17 @@ class _AtividadesPerfilScreenState extends State<AtividadesPerfilScreen> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(
+              Icon(
                 Icons.error_outline,
                 size: 45,
-                color: Color(0xFFC92768),
+                color: _cores.error,
               ),
               const SizedBox(height: 12),
-              Text(_erro!, textAlign: TextAlign.center),
+              Text(
+                _erro!,
+                textAlign: TextAlign.center,
+                style: TextStyle(color: _cores.onSurface),
+              ),
               const SizedBox(height: 14),
               ElevatedButton(
                 onPressed: _carregarAtividades,
@@ -264,7 +276,7 @@ class _AtividadesPerfilScreenState extends State<AtividadesPerfilScreen> {
 
     if (listaVazia) {
       return RefreshIndicator(
-        color: const Color(0xFFEF3F7A),
+        color: _cores.primary,
         onRefresh: _carregarAtividades,
         child: ListView(
           physics: const AlwaysScrollableScrollPhysics(),
@@ -280,7 +292,7 @@ class _AtividadesPerfilScreenState extends State<AtividadesPerfilScreen> {
 
     if (widget.tipo == TipoAtividadePerfil.noticias) {
       return RefreshIndicator(
-        color: const Color(0xFFEF3F7A),
+        color: _cores.primary,
         onRefresh: _carregarAtividades,
         child: ListView.builder(
           padding: const EdgeInsets.all(16),
@@ -293,7 +305,7 @@ class _AtividadesPerfilScreenState extends State<AtividadesPerfilScreen> {
     }
 
     return RefreshIndicator(
-      color: const Color(0xFFEF3F7A),
+      color: _cores.primary,
       onRefresh: _carregarAtividades,
       child: ListView.builder(
         padding: const EdgeInsets.all(16),
@@ -314,15 +326,18 @@ class _AtividadesPerfilScreenState extends State<AtividadesPerfilScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFFFF8FA),
+      backgroundColor: _fundo,
       appBar: AppBar(
         title: Text(
           _titulo,
-          style: const TextStyle(fontSize: 19, fontWeight: FontWeight.w700),
+          style: const TextStyle(
+            fontSize: 19,
+            fontWeight: FontWeight.w700,
+          ),
         ),
         centerTitle: true,
-        backgroundColor: const Color(0xFFC92768),
-        foregroundColor: Colors.white,
+        backgroundColor: _cores.primary,
+        foregroundColor: _cores.onPrimary,
         elevation: 0,
       ),
       body: _conteudo(),
