@@ -20,11 +20,10 @@ class _HashtagsEmAltaState extends State<HashtagsEmAlta> {
 
   late Future<List<dynamic>> _hashtagsFuture;
 
-  // Cores próprias do ranking: permanecem iguais em qualquer tema.
   static const List<Color> _coresVibrantes = [
     Color(0xFF8E24AA),
     Color(0xFFD52B6D),
-    Color(0xFF00ACC1),
+    Color(0xFF008F9C),
   ];
 
   ColorScheme get _cores => Theme.of(context).colorScheme;
@@ -67,7 +66,7 @@ class _HashtagsEmAltaState extends State<HashtagsEmAlta> {
         final hashtags = snapshot.data ?? [];
 
         if (hashtags.isEmpty) {
-          return _vazio();
+          return const SizedBox.shrink();
         }
 
         return _conteudoRanking(hashtags);
@@ -77,63 +76,38 @@ class _HashtagsEmAltaState extends State<HashtagsEmAlta> {
 
   Widget _carregando() {
     return Container(
-      height: 120,
       width: double.infinity,
-      padding: const EdgeInsets.all(20),
-      decoration: _decoracao(),
-      child: Center(
+      padding: const EdgeInsets.symmetric(vertical: 12),
+      alignment: Alignment.center,
+      child: SizedBox(
+        width: 20,
+        height: 20,
         child: CircularProgressIndicator(
           color: _cores.primary,
-          strokeWidth: 2.5,
+          strokeWidth: 2,
         ),
       ),
     );
   }
 
   Widget _erro() {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(20),
-      decoration: _decoracao(),
-      child: Column(
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 12),
+      child: Row(
         children: [
           Icon(
             Icons.cloud_off_outlined,
             color: _cores.error,
-            size: 32,
+            size: 18,
           ),
-          const SizedBox(height: 8),
-          Text(
-            'Não foi possível carregar o ranking.',
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              color: _cores.onSurfaceVariant,
-              fontSize: 14,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _vazio() {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(20),
-      decoration: _decoracao(),
-      child: Column(
-        children: [
-          Icon(
-            Icons.tag,
-            color: _cores.primary,
-            size: 32,
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Ainda não existem hashtags no ranking.',
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              color: _cores.onSurfaceVariant,
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              'Não foi possível carregar os assuntos em alta.',
+              style: TextStyle(
+                color: _cores.onSurfaceVariant,
+                fontSize: 12,
+              ),
             ),
           ),
         ],
@@ -165,132 +139,116 @@ class _HashtagsEmAltaState extends State<HashtagsEmAlta> {
         .toList();
 
     if (lista.isEmpty) {
-      return _vazio();
+      return const SizedBox.shrink();
     }
 
     lista.sort((a, b) => b.quantidade.compareTo(a.quantidade));
 
     final ranking = lista.take(3).toList();
 
-    final quantidadeMaior = ranking.first.quantidade;
-    final quantidadeMenor = ranking.last.quantidade;
-
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(20),
-      decoration: _decoracao(),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: _cores.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: _cores.outlineVariant,
+        ),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'Assuntos do Momento',
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w800,
+          Row(
+            children: [
+              Icon(
+                Icons.local_fire_department_rounded,
+                color: _cores.primary,
+                size: 21,
+              ),
+              const SizedBox(width: 7),
+              Text(
+                'Assuntos em alta',
+                style: TextStyle(
                   color: _cores.onSurface,
+                  fontSize: 15,
+                  fontWeight: FontWeight.w800,
                 ),
+              ),
+            ],
           ),
-          const SizedBox(height: 16),
-          ListView.separated(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            itemCount: ranking.length,
-            separatorBuilder: (context, index) => Divider(
-              height: 16,
-              color: _cores.outlineVariant,
-            ),
-            itemBuilder: (context, index) {
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: List.generate(ranking.length, (index) {
               final item = ranking[index];
-              final posicao = index + 1;
-
-              // Cada posição mantém sua cor, independentemente do tema.
-              final corDaHashtag =
-                  _coresVibrantes[index % _coresVibrantes.length];
-
-              final proporcao = quantidadeMaior == quantidadeMenor
-                  ? 0.5
-                  : (item.quantidade - quantidadeMenor) /
-                      (quantidadeMaior - quantidadeMenor);
-
-              final tamanhoFonte = 14.0 + (proporcao * 3.0);
+              final cor = _coresVibrantes[
+                  index % _coresVibrantes.length];
 
               return InkWell(
                 onTap: () {
                   widget.onHashtagSelecionada?.call(item.nome);
                 },
-                borderRadius: BorderRadius.circular(8),
-                child: Padding(
+                borderRadius: BorderRadius.circular(10),
+                child: Container(
                   padding: const EdgeInsets.symmetric(
-                    vertical: 4,
-                    horizontal: 2,
+                    horizontal: 11,
+                    vertical: 9,
                   ),
-                  child: Row(
+                  decoration: BoxDecoration(
+                    color: cor.withValues(alpha: 0.09),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(
+                      color: cor.withValues(alpha: 0.25),
+                    ),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
                     children: [
-                      SizedBox(
-                        width: 28,
-                        child: Text(
-                          '$posicaoº',
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w800,
-                            color: corDaHashtag,
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            '${index + 1}º',
+                            style: TextStyle(
+                              color: cor,
+                              fontSize: 10,
+                              fontWeight: FontWeight.w800,
+                            ),
                           ),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
+                          const SizedBox(width: 5),
+                          Flexible(
+                            child: Text(
                               item.nome,
+                              overflow: TextOverflow.ellipsis,
                               style: TextStyle(
-                                fontSize: tamanhoFonte,
-                                fontWeight: FontWeight.w700,
-                                color: corDaHashtag,
-                              ),
-                            ),
-                            const SizedBox(height: 2),
-                            Text(
-                              '${item.quantidade} '
-                              '${item.quantidade == 1 ? 'publicação' : 'publicações'}',
-                              style: TextStyle(
+                                color: cor,
                                 fontSize: 12,
-                                color: _cores.onSurfaceVariant,
+                                fontWeight: FontWeight.w800,
                               ),
                             ),
-                          ],
-                        ),
+                          ),
+                        ],
                       ),
-                      Icon(
-                        Icons.chevron_right,
-                        color: _cores.onSurfaceVariant,
-                        size: 20,
+                      const SizedBox(height: 3),
+                      Text(
+                        '${item.quantidade} '
+                        '${item.quantidade == 1 ? 'publicação' : 'publicações'}',
+                        style: TextStyle(
+                          color: _cores.onSurfaceVariant,
+                          fontSize: 10,
+                        ),
                       ),
                     ],
                   ),
                 ),
               );
-            },
+            }),
           ),
         ],
       ),
-    );
-  }
-
-  BoxDecoration _decoracao() {
-    return BoxDecoration(
-      color: _cores.surface,
-      borderRadius: BorderRadius.circular(20),
-      border: Border.all(
-        color: _cores.outlineVariant,
-      ),
-      boxShadow: [
-        BoxShadow(
-          color: Colors.black.withValues(alpha: 0.04),
-          blurRadius: 10,
-          offset: const Offset(0, 4),
-        ),
-      ],
     );
   }
 }

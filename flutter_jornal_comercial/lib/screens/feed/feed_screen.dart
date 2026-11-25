@@ -298,22 +298,8 @@ class _FeedScreenState extends State<FeedScreen> {
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 900),
           child: Padding(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              children: [
-                _campoPesquisa(),
-                const SizedBox(height: 16),
-                HashtagsEmAlta(
-                  onHashtagSelecionada: _selecionarHashtag,
-                ),
-                if (_hashtagSelecionada != null) ...[
-                  const SizedBox(height: 12),
-                  _filtroAtivo(),
-                ],
-                const SizedBox(height: 20),
-                Expanded(child: _feed()),
-              ],
-            ),
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            child: _feed(),
           ),
         ),
       ),
@@ -419,151 +405,218 @@ class _FeedScreenState extends State<FeedScreen> {
     return FutureBuilder<List<Publicacao>>(
       future: _publicacoesFuture,
       builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return Center(
+        final slivers = <Widget>[
+          SliverToBoxAdapter(
             child: Padding(
-              padding: const EdgeInsets.all(40),
-              child: CircularProgressIndicator(
-                color: _primaria,
+              padding: const EdgeInsets.only(top: 16),
+              child: _campoPesquisa(),
+            ),
+          ),
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.only(top: 14),
+              child: HashtagsEmAlta(
+                onHashtagSelecionada: _selecionarHashtag,
+              ),
+            ),
+          ),
+          if (_hashtagSelecionada != null)
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.only(top: 12),
+                child: _filtroAtivo(),
+              ),
+            ),
+          const SliverToBoxAdapter(
+            child: SizedBox(height: 18),
+          ),
+        ];
+
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          slivers.add(
+            SliverFillRemaining(
+              hasScrollBody: false,
+              child: Center(
+                child: CircularProgressIndicator(
+                  color: _primaria,
+                ),
               ),
             ),
           );
-        }
-
-        if (snapshot.hasError) {
-          return Center(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  Icons.error_outline,
-                  size: 45,
-                  color: _erro,
-                ),
-                const SizedBox(height: 10),
-                Text(
-                  'Não foi possível carregar o feed.',
-                  style: TextStyle(color: _texto),
-                ),
-                const SizedBox(height: 10),
-                ElevatedButton(
-                  onPressed: _atualizarFeed,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: _primaria,
-                    foregroundColor: _textoBotao,
-                  ),
-                  child: const Text('Tentar novamente'),
-                ),
-              ],
-            ),
-          );
-        }
-
-        final todasPublicacoes = snapshot.data ?? [];
-        final publicacoes = _filtrarPublicacoes(todasPublicacoes);
-
-        if (todasPublicacoes.isEmpty &&
-            _termoPesquisa.trim().isEmpty &&
-            _hashtagSelecionada == null) {
-          return Center(
-            child: Container(
-              padding: const EdgeInsets.all(30),
-              decoration: BoxDecoration(
-                color: _superficie,
-                borderRadius: BorderRadius.circular(18),
-                border: Border.all(color: _borda),
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    Icons.forum_outlined,
-                    size: 50,
-                    color: _primaria,
-                  ),
-                  const SizedBox(height: 12),
-                  Text(
-                    'Ainda não há publicações.',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: _texto,
+        } else if (snapshot.hasError) {
+          slivers.add(
+            SliverFillRemaining(
+              hasScrollBody: false,
+              child: Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.error_outline,
+                      size: 45,
+                      color: _erro,
                     ),
-                  ),
-                  const SizedBox(height: 5),
-                  Text(
-                    'Seja a primeira pessoa a publicar!',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(color: _secundaria),
-                  ),
-                ],
+                    const SizedBox(height: 10),
+                    Text(
+                      'Não foi possível carregar o feed.',
+                      style: TextStyle(color: _texto),
+                    ),
+                    const SizedBox(height: 10),
+                    ElevatedButton(
+                      onPressed: _atualizarFeed,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: _primaria,
+                        foregroundColor: _textoBotao,
+                      ),
+                      child: const Text('Tentar novamente'),
+                    ),
+                  ],
+                ),
               ),
             ),
           );
-        }
+        } else {
+          final todasPublicacoes = snapshot.data ?? [];
+          final publicacoes = _filtrarPublicacoes(todasPublicacoes);
 
-        if (publicacoes.isEmpty) {
-          return ListView(
-            physics: const AlwaysScrollableScrollPhysics(),
-            children: [
-              const SizedBox(height: 45),
-              Icon(
-                Icons.search_off,
-                size: 50,
-                color: _primaria,
-              ),
-              const SizedBox(height: 12),
-              Text(
-                'Nenhuma publicação encontrada.',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: _texto,
+          if (todasPublicacoes.isEmpty &&
+              _termoPesquisa.trim().isEmpty &&
+              _hashtagSelecionada == null) {
+            slivers.add(
+              SliverFillRemaining(
+                hasScrollBody: false,
+                child: _mensagemVazia(
+                  Icons.forum_outlined,
+                  'Ainda não há publicações.',
+                  'Seja a primeira pessoa a publicar!',
                 ),
               ),
-              const SizedBox(height: 8),
-              Text(
-                'Tente outra palavra ou limpe os filtros.',
-                textAlign: TextAlign.center,
-                style: TextStyle(color: _secundaria),
+            );
+          } else if (publicacoes.isEmpty) {
+            slivers.add(
+              SliverFillRemaining(
+                hasScrollBody: false,
+                child: _mensagemSemResultado(),
               ),
-              const SizedBox(height: 12),
-              Center(
-                child: TextButton(
-                  onPressed: _limparFiltros,
-                  child: Text(
-                    'Limpar filtros',
-                    style: TextStyle(color: _primaria),
-                  ),
+            );
+          } else {
+            slivers.add(
+              SliverList(
+                delegate: SliverChildBuilderDelegate(
+                  (context, index) {
+                    final publicacao = publicacoes[index];
+
+                    return PublicacaoCard(
+                      key: ValueKey(publicacao.id),
+                      publicacao: publicacao,
+                      usuarioId: _usuarioId,
+                      atualizar: _atualizarFeed,
+                    );
+                  },
+                  childCount: publicacoes.length,
                 ),
               ),
-            ],
-          );
+            );
+          }
         }
 
         return RefreshIndicator(
           onRefresh: _atualizarFeed,
           color: _primaria,
           backgroundColor: _superficie,
-          child: ListView.builder(
+          child: CustomScrollView(
             physics: const AlwaysScrollableScrollPhysics(),
-            padding: const EdgeInsets.only(bottom: 100),
-            itemCount: publicacoes.length,
-            itemBuilder: (context, index) {
-              final publicacao = publicacoes[index];
-
-              return PublicacaoCard(
-                key: ValueKey(publicacao.id),
-                publicacao: publicacao,
-                usuarioId: _usuarioId,
-                atualizar: _atualizarFeed,
-              );
-            },
+            slivers: [
+              ...slivers,
+              const SliverToBoxAdapter(
+                child: SizedBox(height: 100),
+              ),
+            ],
           ),
         );
       },
+    );
+  }
+
+  Widget _mensagemVazia(
+    IconData icone,
+    String titulo,
+    String descricao,
+  ) {
+    return Center(
+      child: Container(
+        padding: const EdgeInsets.all(30),
+        decoration: BoxDecoration(
+          color: _superficie,
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(color: _borda),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              icone,
+              size: 50,
+              color: _primaria,
+            ),
+            const SizedBox(height: 12),
+            Text(
+              titulo,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: _texto,
+              ),
+            ),
+            const SizedBox(height: 5),
+            Text(
+              descricao,
+              textAlign: TextAlign.center,
+              style: TextStyle(color: _secundaria),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _mensagemSemResultado() {
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            Icons.search_off,
+            size: 50,
+            color: _primaria,
+          ),
+          const SizedBox(height: 12),
+          Text(
+            'Nenhuma publicação encontrada.',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: _texto,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Tente outra palavra ou limpe os filtros.',
+            textAlign: TextAlign.center,
+            style: TextStyle(color: _secundaria),
+          ),
+          const SizedBox(height: 12),
+          TextButton(
+            onPressed: _limparFiltros,
+            child: Text(
+              'Limpar filtros',
+              style: TextStyle(color: _primaria),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
