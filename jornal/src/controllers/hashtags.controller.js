@@ -1,8 +1,8 @@
+
 const prisma = require("../data/prisma");
 
 const listar = async (req, res) => {
     try {
-
         const hashtags = await prisma.hashtags.findMany({
             where: {
                 empresaId: req.user.empresaId
@@ -15,18 +15,15 @@ const listar = async (req, res) => {
         return res.status(200).json(hashtags);
 
     } catch (erro) {
-
         return res.status(500).json({
             mensagem: "Erro ao listar hashtags",
             erro: erro.message
         });
-
     }
 };
 
 const buscarPorNome = async (req, res) => {
     try {
-
         const { nome } = req.params;
 
         const nomeFormatado = nome.startsWith("#")
@@ -49,18 +46,15 @@ const buscarPorNome = async (req, res) => {
         return res.status(200).json(hashtag);
 
     } catch (erro) {
-
         return res.status(500).json({
             mensagem: "Erro ao buscar hashtag",
             erro: erro.message
         });
-
     }
 };
 
 const listarPublicacoes = async (req, res) => {
     try {
-
         const { nome } = req.params;
 
         const nomeFormatado = nome.startsWith("#")
@@ -103,21 +97,23 @@ const listarPublicacoes = async (req, res) => {
         return res.status(200).json(hashtag.publicacoes);
 
     } catch (erro) {
-
         return res.status(500).json({
             mensagem: "Erro ao listar publicações da hashtag",
             erro: erro.message
         });
-
     }
 };
 
 const ranking = async (req, res) => {
     try {
-
         const hashtags = await prisma.hashtags.findMany({
             where: {
-                empresaId: req.user.empresaId
+                empresaId: req.user.empresaId,
+                publicacoes: {
+                    some: {
+                        empresaId: req.user.empresaId
+                    }
+                }
             },
             include: {
                 publicacoes: {
@@ -141,12 +137,10 @@ const ranking = async (req, res) => {
         return res.status(200).json(ranking);
 
     } catch (erro) {
-
         return res.status(500).json({
             mensagem: "Erro ao gerar ranking de hashtags",
             erro: erro.message
         });
-
     }
 };
 
